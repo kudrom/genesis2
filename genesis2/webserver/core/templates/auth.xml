@@ -1,0 +1,68 @@
+<html class="auth-html">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Genesis</title>
+    <link rel="shortcut icon" href="/dl/core/ui/favicon.png" />
+    <headstylesheets/>
+    <link rel="stylesheet/less" href="/core/styles.less" />
+    <headscripts/>
+    <link href='/core/webfonts.css' rel='stylesheet' type='text/css' />
+    <link rel="shortcut icon" href="/dl/core/ui/favicon.png" />
+</head>
+
+<body id="main">
+<div id="whiteout" style="display:none;opacity:0" />
+<div class="auth-page">
+    <div class="auth-ct">
+      <p id="auth-error"><strong>Error: </strong>Login failed. Check username and password.</p>
+      <div class="login-icon">
+          <img src="/dl/core/ui/auth-logo.png" />
+      </div>
+      <div class="login">
+        <form id="form" method="POST">
+            <p><input type="text" id="username" name="username" class="login-field" placeholder="Enter your username" /><i class="login-field-icon login-field-uicon gen-user"></i></p>
+            <p><input type="password" id="password" name="password" class="login-field" placeholder="Enter your password" /><i class="login-field-icon login-field-picon gen-lock"></i></p>
+            <a class="btn btn-block login-button" id="login" onclick="$('#form').submit();">Login to Genesis</a>
+        </form>
+      </div>
+    </div>
+</div>
+
+<script>
+$('#username').focus()
+$('#password').bind('keyup', function(event) {
+    if(event.keyCode==13){
+       $('#form').submit();    
+    }
+});
+$('#form').submit(function (e) {
+    e.preventDefault();
+    $('#login').addClass('disabled');
+    $('#login').text('Authenticating...');
+    $('#auth-error').css('display', 'none');
+    $('.auth-page').css('background-color', '#3498DB');
+    Genesis.UI.wipeOut(true); 
+    $.ajax({
+        url: '/auth',
+        type: 'POST',
+        data: {
+            username: $('#username').val(),
+            response: $('#password').val()
+        },
+        success: function () {
+            $('#form').unbind('submit');
+            $('#password').val('');
+            $('#login').click();
+        },
+        error: function() {
+            Genesis.UI.wipeOut();
+            $('#login').removeClass('disabled');
+            $('#login').text('Login to Genesis');
+            $('.auth-page').css('background-color', '#E74C3C');
+            $('#auth-error').css('display', 'block');
+        }
+    });
+});
+</script>
+</body>
+</html>
