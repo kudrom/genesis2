@@ -1,16 +1,14 @@
-from genesis.utils import *
-from genesis import version
-from genesis.ui import UI
-from genesis.ui.template import BasicTemplate
+from genesis2.utils import *
+from genesis2 import version
+from genesis2.ui import UI
 
 import platform
 import traceback
 
 
-
 class BackendRequirementError(Exception):
     """
-    Raised by :func:`genesis.middleware.Application.get_backend` if backend plugin
+    Raised by :func:`genesis.core.Application.get_backend` if backend plugin
     wasn't found.
     """
     def __init__(self, interface):
@@ -46,21 +44,20 @@ class SystemTimeError(Exception):
 def format_exception(app, err):
     print '\n%s\n' % err
     templ = app.get_template('error.xml')
-    templ.append('trace',
-            UI.TextInputArea(value=err, width=550))
-    templ.append('report',
-            UI.TextInputArea(value=make_report(app, err), width=550))
+    templ.append('trace', UI.TextInputArea(value=err, width=550))
+    templ.append('report', UI.TextInputArea(value=make_report(app, err), width=550))
     return templ.render()
 
 
 def format_error(app, ex):
     templ = app.get_template('disabled.xml')
-    tool = None
     if isinstance(ex, BackendRequirementError):
         reason = 'Required backend is unavailable.'
-        hint = 'You need a plugin that provides <b>%s</b> interface support for <b>%s</b> platform.<br/>' % (ex.interface, app.platform)
+        hint = 'You need a plugin that provides <b>%s</b> interface support for <b>%s</b> platform.<br/>' % \
+               (ex.interface, app.platform)
     elif isinstance(ex, ConfigurationError):
-        reason = 'The plugin was unable to start with current configuration.<br/>Consider using configuration dialog for this plugin.'
+        reason = """The plugin was unable to start with current configuration.<br/>
+                    Consider using configuration dialog for this plugin."""
         hint = ex.hint
     else:
         return format_exception(app, traceback.format_exc())
@@ -74,7 +71,7 @@ def make_report(app, err):
     """
     Formats a bug report.
     """
-    from genesis.plugmgr import PluginLoader
+    from genesis2.core.plugmgr import PluginLoader
     pr = ''
     for p in sorted(PluginLoader.list_plugins().keys()):
         pr += p + '\n'
@@ -82,17 +79,23 @@ def make_report(app, err):
     # Finalize the reported log
     app.log.blackbox.stop()
 
+    buf = app.log.blackbox.buffer.split('\n')
+    if len(buf) >= 50:
+        buf = buf[-50:]
+        buf.insert(0, '(Showing only the last 50 entries)\n')
+    buf = '\n'.join(buf)
+
     return (('Genesis %s bug report\n' +
-           '--------------------\n\n' +
-           'System: %s\n' +
-           'Detected platform: %s\n' +
-           'Detected distro: %s\n' +
-           'Python: %s\n\n' +
-           'Config path: %s\n\n' +
-           '%s\n\n'
-           'Loaded plugins:\n%s\n\n' +
-           'Log:\n%s\n'
-           )
+             '--------------------\n\n' +
+             'System: %s\n' +
+             'Detected platform: %s\n' +
+             'Detected distro: %s\n' +
+             'Python: %s\n\n' +
+             'Config path: %s\n\n' +
+             '%s\n\n'
+             'Loaded plugins:\n%s\n\n' +
+             'Log:\n%s\n'
+             )
             % (version(),
                shell('uname -a'),
                detect_platform(),
@@ -101,5 +104,5 @@ def make_report(app, err):
                app.config.filename,
                err,
                pr,
-               app.log.blackbox.buffer,
-              ))
+               buf,)
+            )

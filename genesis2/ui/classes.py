@@ -1,6 +1,6 @@
 import random
 from lxml import etree
-from genesis.utils import fix_unicode
+from genesis2.utils import fix_unicode
 
 
 class Element(etree.ElementBase):
@@ -14,7 +14,7 @@ class Element(etree.ElementBase):
         etree.ElementBase.__init__(self)
         self.tag = tag.lower()
         if not 'id' in kwargs.keys() or kwargs['id'] is None:
-            self['id'] = str(random.randint(1,9000*9000))
+            self['id'] = str(random.randint(1, 9000*9000))
         self._init(*args, **kwargs)
         self._children = []
         for k in args:
@@ -23,7 +23,7 @@ class Element(etree.ElementBase):
             if kwargs[k] is not None:
                 self[k] = kwargs[k]
 
-    def _init(self, *args, **kwargs):
+    def _init(self):
         etree.ElementBase._init(self)
         if not hasattr(self, '_children'):
             self._children = []
@@ -84,7 +84,7 @@ class UI(object):
     def list_overrides():
         if UI.__overrides_cache is None:
             UI.__overrides_cache = dict(
-                [(x.lower(),getattr(UI,x)) for x in UI.__dict__]
+                [(x.lower(), getattr(UI, x)) for x in UI.__dict__]
             )
         return UI.__overrides_cache
 
@@ -176,7 +176,6 @@ class UI(object):
             if content is not None:
                 self.append(tb)
             self.tc += 1
-
 
 
 class TreeManager(object):

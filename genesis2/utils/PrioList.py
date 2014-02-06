@@ -29,7 +29,7 @@ class PrioList(UserList):
     def _prio_index(self, prio):
         i = None
         for p, el in enumerate(self.prio):
-             if prio < el:
+            if prio < el:
                 i = p
                 break
         if i is None:

@@ -40,6 +40,7 @@ def enquote(s):
     s = s.replace('<', '&lt;').replace('>', '&gt;').replace('\n', '<br/>')
     return s
 
+
 def fix_unicode(s):
     """
     Tries to fix a broken Unicode string.
@@ -49,6 +50,7 @@ def fix_unicode(s):
     d = ''.join(max(i, ' ') if not i in ['\n', '\t', '\r'] else i for i in s)
     return unicode(d.encode('utf-8', 'xmlcharref'), errors='replace')
 
+
 def cidr_to_netmask(cidr):
     """
     Convert a CIDR to netmask. Takes integer.
@@ -56,8 +58,9 @@ def cidr_to_netmask(cidr):
     """
     mask = [0, 0, 0, 0]
     for i in range(cidr):
-        mask[i/8] = mask[i/8] + (1 << (7 - i % 8))
+        mask[i / 8] += 1 << (7 - i % 8)
     return ".".join(map(str, mask))
+
 
 def netmask_to_cidr(mask):
     """
@@ -69,6 +72,7 @@ def netmask_to_cidr(mask):
     for octet in mask:
         binary_str += bin(int(octet))[2:].zfill(8)
     return len(binary_str.rstrip('0'))
+
 
 def detect_platform(mapping=True):
     """
@@ -113,6 +117,7 @@ def detect_platform(mapping=True):
             res = platform_mapping[res]
     return res
 
+
 def detect_distro():
     """
     Returns human-friendly OS name.
@@ -120,6 +125,7 @@ def detect_distro():
     if shell_status('lsb_release -sd') == 0:
         return shell('lsb_release -sd')
     return shell('uname -mrs')
+
 
 def download(url, file=None, crit=False):
     """
@@ -135,24 +141,26 @@ def download(url, file=None, crit=False):
             open(file, 'w').write(data)
         else:
             return data
-    except Exception, e:
+    except:
         if crit:
             raise
+
 
 def shell(c, stderr=False):
     """
     Runs commandline in the default shell and returns output. Blocking.
     """
-    p = subprocess.Popen('LC_ALL=C '+c, shell=True,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE)
+    p = subprocess.Popen('LC_ALL=C '+c, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
     try:
-        data = p.stdout.read() # Workaround; waiting first causes a deadlock
-    except: # WTF OSError (interrupted request)
+        # Workaround; waiting first causes a deadlock
+        data = p.stdout.read()
+    except OSError:
+        # WTF OSError (interrupted request)
         data = ''
     p.wait()
     return data + p.stdout.read() + (p.stderr.read() if stderr else '')
+
 
 def shell_bg(c, output=None, deleteout=False):
     """
@@ -165,49 +173,46 @@ def shell_bg(c, output=None, deleteout=False):
     :type   deleteout:  bool
     """
     if output is not None:
-        c = 'LC_ALL=C bash -c "%s" > %s 2>&1'%(c,output)
+        c = 'LC_ALL=C bash -c "%s" > %s 2>&1' % (c, output)
         if deleteout:
-            c = 'touch %s; %s; rm -f %s'%(output,c,output)
-    subprocess.Popen(c, shell=True,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE)
+            c = 'touch %s; %s; rm -f %s' % (output, c, output)
+    subprocess.Popen(c, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
 
 def shell_status(c):
     """
     Same, but returns only the exitcode.
     """
-    return subprocess.Popen('LC_ALL=C '+c, shell=True,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE).wait()
+    return subprocess.Popen('LC_ALL=C '+c, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE).wait()
+
 
 def shell_cs(c, stderr=False):
     """
     Same, but returns exitcode and output in a tuple.
     """
-    p = subprocess.Popen('LC_ALL=C '+c, shell=True,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE)
+    p = subprocess.Popen('LC_ALL=C '+c, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
     try:
-        data = p.stdout.read() # Workaround; waiting first causes a deadlock
-    except: # WTF OSError (interrupted request)
+        # Workaround; waiting first causes a deadlock
+        data = p.stdout.read()
+    # WTF OSError (interrupted request)
+    except OSError:
         data = ''
     p.wait()
-    return (p.returncode, data + p.stdout.read() + (p.stderr.read() if stderr else ''))
+    return p.returncode, data + p.stdout.read() + (p.stderr.read() if stderr else '')
+
 
 def shell_stdin(c, input):
     """
     Same, but feeds input to process' stdin and returns its stdout
     upon completion.
     """
-    p = subprocess.Popen('LC_ALL=C '+c, shell=True,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stdin=subprocess.PIPE)
+    p = subprocess.Popen('LC_ALL=C '+c, shell=True, stderr=subprocess.PIPE,
+                         stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     return p.communicate(input)
 
 
-def hashpw(passw, scheme = 'sha512_crypt'):
+def hashpw(passw, scheme='sha512_crypt'):
     """
     Returns a hashed form of given password. Default scheme is
     sha512_crypt. Accepted schemes: sha512_crypt, bcrypt, sha (deprecated)
@@ -242,6 +247,7 @@ def str_fsize(sz):
     sz /= 1024.0
     return '%.1f Gb' % sz
 
+
 def wsgi_serve_file(req, start_response, file):
     """
     Serves a file as WSGI reponse.
@@ -253,7 +259,7 @@ def wsgi_serve_file(req, start_response, file):
 
     # Check if this is a file
     if not os.path.isfile(file):
-        start_response('404 Not Found',[])
+        start_response('404 Not Found', [])
         return ''
 
     headers = []
@@ -272,7 +278,7 @@ def wsgi_serve_file(req, start_response, file):
         (mimetype, encoding) = mimetypes.guess_type(file)
         if mimetype is not None:
             content_type = mimetype
-    headers.append(('Content-type',content_type))
+    headers.append(('Content-type', content_type))
 
     size = os.path.getsize(file)
     mtimestamp = os.path.getmtime(file)
@@ -280,15 +286,12 @@ def wsgi_serve_file(req, start_response, file):
 
     rtime = req.get('HTTP_IF_MODIFIED_SINCE', None)
     if rtime is not None:
-        try:
-            rtime = datetime.strptime(rtime, '%a, %b %d %Y %H:%M:%S GMT')
-            if mtime <= rtime:
-                start_response('304 Not Modified',[])
-                return ''
-        except:
-            pass
+        rtime = datetime.strptime(rtime, '%a, %b %d %Y %H:%M:%S GMT')
+        if mtime <= rtime:
+            start_response('304 Not Modified', [])
+            return ''
 
-    headers.append(('Content-length',str(size)))
-    headers.append(('Last-modified',mtime.strftime('%a, %b %d %Y %H:%M:%S GMT')))
+    headers.append(('Content-length', str(size)))
+    headers.append(('Last-modified', mtime.strftime('%a, %b %d %Y %H:%M:%S GMT')))
     start_response('200 OK', headers)
     return open(file).read()

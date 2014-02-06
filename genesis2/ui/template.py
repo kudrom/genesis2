@@ -1,7 +1,7 @@
-from lxml import etree
 from classes import *
 import os.path
 import xslt
+
 
 class Layout:
     """
@@ -17,7 +17,7 @@ class Layout:
         """
         Finds a child element by `id` attribute.
         """
-        el = self._dom.find('//*[@id=\'%s\']'%id)
+        el = self._dom.find('//*[@id=\'%s\']' % id)
         return el
 
     def remove(self, id):
@@ -43,7 +43,7 @@ class Layout:
                 child = child.elements()
             el.append(child)
         else:
-            raise RuntimeError("Tag with id=%s not found"%dest)
+            raise RuntimeError("Tag with id=%s not found" % dest)
 
     def appendAll(self, dest, *args):
         """
@@ -80,13 +80,10 @@ class BasicTemplate(Layout):
         Layout.__init__(self, filename)
 
         # Fill in CSS and JS refs
-        try:
-            for x in sorted(styles):
-                self._dom.find('.//headstylesheets').append(etree.Element('headstylesheet', href=x))
-            for x in sorted(scripts):
-                self._dom.find('.//headscripts').append(etree.Element('headscript', href=x))
-        except:
-            pass
+        for x in sorted(styles):
+            self._dom.find('.//headstylesheets').append(etree.Element('headstylesheet', href=x))
+        for x in sorted(scripts):
+            self._dom.find('.//headscripts').append(etree.Element('headscript', href=x))
 
 
 class Lookup(etree.CustomElementClassLookup):

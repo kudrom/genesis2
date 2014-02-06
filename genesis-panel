@@ -5,12 +5,12 @@ import getopt
 import os
 import logging
 
-from genesis2.webserver.daemon import Daemon
+from genesis2.utils.daemon import Daemon
 
 
 class GenesisDaemon(Daemon):
     def run(self):
-        from genesis2.webserver.standalone import run_server
+        from genesis2.launcher import run_server
         run_server(self.log_level, self.config_file)
 
 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
             config_file = os.path.join(sys.path[0], 'genesis.conf')
     
     if action == 'run':
-        from genesis2.webserver.standalone import run_server
+        from genesis2.launcher import run_server
         run_server(log_level, config_file)
     else:
         genesisd = GenesisDaemon('/var/run/genesis.pid', stdout='/var/log/genesis.log')

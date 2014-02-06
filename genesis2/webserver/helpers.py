@@ -1,10 +1,9 @@
 import inspect
 import traceback
 
-from genesis.com import *
-from genesis.api import *
-from genesis.ui import *
-from genesis import apis
+from genesis2.core.core import Plugin
+from genesis2.ui import UI
+from genesis2 import apis
 
 
 def event(event_name):
@@ -27,18 +26,20 @@ def event(event_name):
     # Get locals from it
     locals = frame.f_locals
 
-    if ((locals is frame.f_globals) or
-        ('__module__' not in locals)):
+    if (locals is frame.f_globals) or ('__module__' not in locals):
         raise TypeError('@event() can only be used in class definition')
 
-    loc_events = locals.setdefault('_events',{})
+    loc_events = locals.setdefault('_events', {})
 
     def event_decorator(func):
         loc_events[event_name] = func.__name__
         return func
+
     #def event_decorator
 
     return event_decorator
+
+
 #def event
 
 
@@ -48,7 +49,6 @@ class EventProcessor(object):
     You will need to decorate handler methods with :func:`event`.
     """
     implements(IEventDispatcher)
-
 
     def _get_event_handler(self, event):
         """
@@ -142,8 +142,7 @@ class SessionPlugin(Plugin):
         if name[0] == '_' and not name[1] == '_':
             return self.session_proxy.get(name, None)
         else:
-            raise AttributeError("'%s' object has no attribute '%s'"%
-                                  (self.__class__.__name__, name))
+            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
     def __setattr__(self, name, value):
         # TODO: use regexps
@@ -209,7 +208,7 @@ class CategoryPlugin(SessionPlugin, EventProcessor):
         :type   cls:    str
         :params msg:    message text
         """
-        if not self.app.session.has_key('messages'):
+        if not 'messages' in self.app.session:
             self.app.session['messages'] = []
         self.app.session['messages'].append((cls, msg))
 
@@ -232,18 +231,19 @@ class CategoryPlugin(SessionPlugin, EventProcessor):
     def redirapp(self, service, port, ssl=False):
         if self.app.get_backend(apis.services.IServiceManager).get_status(service) == 'running':
             if ssl:
-                return UI.JS(code='window.location.replace("/embapp/'+str(port)+'/ssl")')
+                return UI.JS(code='window.location.replace("/embapp/' + str(port) + '/ssl")')
             else:
-                return UI.JS(code='window.location.replace("/embapp/'+str(port)+'")')
+                return UI.JS(code='window.location.replace("/embapp/' + str(port) + '")')
         else:
             return UI.DialogBox(UI.Label(text='The service %s is not '
-                'running. Please start the service with the Status button '
-                'before continuing.' % service), hidecancel=True)
+                                              'running. Please start the service with the Status button '
+                                              'before continuing.' % service), hidecancel=True)
 
     def update_services(self):
         apis.networkcontrol(self.app).port_changed(self)
 
 
+# TODO: Merge it with IConfigurable with a personalized IConfMgrHook?
 class ModuleConfig(Plugin):
     """
     Base class for simple "configs" for different platforms for the plugins.
@@ -306,4 +306,4 @@ class ModuleConfig(Plugin):
                 if type(oval) is str:
                     setattr(self, k, nval)
                 if type(oval) is bool:
-                    setattr(self, k, nval=='1')
+                    setattr(self, k, nval == '1')

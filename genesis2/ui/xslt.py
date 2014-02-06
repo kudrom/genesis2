@@ -1,8 +1,8 @@
 from lxml import etree
 from lxml.etree import *
 
-
 xslt = None
+
 
 def prepare(includes, funcs):
     global xslt, xslt2
@@ -14,21 +14,21 @@ def prepare(includes, funcs):
 
     xslt = etree.XSLT(etree.fromstring(xml), extensions=ex)
     xslt2 = etree.XSLT(etree.fromstring(XSLT2), extensions=ex)
-        
+
+
 def render(templ):
     global xslt, xslt2
-    return etree.tostring(xslt2(xslt(xslt(templ))), method="html", pretty_print=True) #!!!
-    
-    
+    return etree.tostring(xslt2(xslt(xslt(templ))), method="html", pretty_print=True)
 
-XSLT="""<?xml version="1.0" encoding="utf-8"?>
+XSLT = """<?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.0" 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
     xmlns:x="x"
     xmlns:h="h"
     extension-element-prefixes="x">
     
-  <xsl:output method="html" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" encoding="utf-8" />
+  <xsl:output method="html" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
+  doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" encoding="utf-8" />
 
   <xsl:template match="@*|node()">
      <xsl:copy>
@@ -72,7 +72,8 @@ XSLT2 = """<?xml version="1.0" encoding="utf-8"?>
     xmlns:x="x"
     extension-element-prefixes="x">
     
-  <xsl:output method="html" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" encoding="utf-8" />
+  <xsl:output method="html" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
+  doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" encoding="utf-8" />
 
   <xsl:template match="@*|node()">
      <xsl:copy>
