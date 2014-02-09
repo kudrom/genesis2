@@ -1,5 +1,4 @@
-#TODO: Uncomment
-#from utils import *
+from utils import *
 from error import *
 from PrioList import PrioList
 from interlocked import *

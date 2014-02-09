@@ -29,7 +29,7 @@ Options:
 
 if __name__ == '__main__':
     reload(sys)
-    # TODO: is this necessary?
+    # (kudrom) TODO: is this necessary?
     sys.setdefaultencoding('utf-8')
     sys.dont_write_bytecode = True
 

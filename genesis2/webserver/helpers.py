@@ -243,7 +243,7 @@ class CategoryPlugin(SessionPlugin, EventProcessor):
         apis.networkcontrol(self.app).port_changed(self)
 
 
-# TODO: Merge it with IConfigurable with a personalized IConfMgrHook?
+# (kudrom) TODO: Merge it with IConfigurable with a personalized IConfMgrHook?
 class ModuleConfig(Plugin):
     """
     Base class for simple "configs" for different platforms for the plugins.

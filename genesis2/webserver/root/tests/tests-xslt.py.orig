@@ -33,7 +33,10 @@ class TestCss(TestCase):
         ret = css(None, ["40%"], None)
         self.assertEqual(ret, "40%")
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6a48cb1... Structure cleared and tests to webserver.core.xslt
 class TestIff(TestCase):
     def test_select_chosen(self):
         ret = iif(None, True, "chosen", "discarded")
@@ -50,6 +53,7 @@ class TestIff(TestCase):
     def test_select_discarded_lowercase(self):
         ret = iif(None, ["bullshit"], "chosen", "discarded")
         self.assertEqual(ret, "discarded")
+<<<<<<< HEAD
 
 
 # These are the same for idesc and b64
@@ -62,3 +66,5 @@ class Testjsesc(TestCase):
         ret = jsesc(None, ["replace'"])
         self.assertEqual(ret, "replace\\")
 
+=======
+>>>>>>> 6a48cb1... Structure cleared and tests to webserver.core.xslt
