@@ -1,15 +1,10 @@
 from genesis2.ui import *
 from genesis2.core.core import implements, Plugin
-from genesis2.api import *
-from genesis2 import apis
 from updater import FeedUpdater
-
-# We want apis.dashboard already!
-import genesis2.plugins.sysmon.api
-
+from genesis2.interfaces.gui import IWidget
 
 class NewsWidget(Plugin):
-    implements(apis.dashboard.IWidget)
+    implements(IWidget)
     title = 'Project news'
     iconfont = 'gen-bullhorn'
     name = 'Project news'

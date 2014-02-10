@@ -1,8 +1,8 @@
 import os.path
 
 from genesis2.core.core import Plugin
-from apis import URLHandler
-from apis.decorators import url
+from genesis2.apis.decorators import url
+from genesis2.webserver.urlhandler import URLHandler
 from genesis2.utils import wsgi_serve_file
 from genesis2.core.plugmgr import PluginLoader
 

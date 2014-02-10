@@ -2,6 +2,7 @@ import base64
 import random
 
 from genesis2.core.core import Plugin, implements
+from genesis2.interfaces.gui import IXSLTFunctionProvider
 
 
 def attr(_, v, d):
@@ -51,8 +52,7 @@ def id(_, s):
 
 
 class CoreFunctions (Plugin):
-    # TODO: Uncomment
-    #implements(IXSLTFunctionProvider)
+    implements(IXSLTFunctionProvider)
 
     def get_funcs(self):
         return {

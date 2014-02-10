@@ -1,12 +1,14 @@
+import traceback
+
+# TODO: For what is this import?
+import genesis2
 from genesis2.utils import *
 from genesis2.ui import *
 from genesis2.core.plugmgr import PluginLoader
 import genesis2.ui.xslt as xslt
 from genesis2.core.core import PluginManager, Plugin
-# TODO: For what is this import?
-import genesis2
-import traceback
-
+from genesis2.interfaces.gui import IURLHandler, IXSLTFunctionProvider
+from genesis2.interfaces.resources import IModuleConfig
 
 from genesis2.webserver.middleware.session import *
 from genesis2.webserver.middleware.auth import *

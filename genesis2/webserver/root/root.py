@@ -2,11 +2,12 @@ import platform
 import json
 
 from genesis2.ui import UI, BasicTemplate
-from genesis2.core.plugmgr import Plugin
+from genesis2.core.core import Plugin
 from genesis2 import version
-from genesis.api import ICategoryProvider, EventProcessor, SessionPlugin, event, URLHandler, url, get_environment_vars
+from genesis2.interfaces.gui import ICategoryProvider, IProgressBoxProvider
+from genesis2.webserver.helpers import EventProcessor, SessionPlugin, event
+from genesis2.webserver.urlhandler import URLHandler, url, get_environment_vars
 from genesis2.utils import ConfigurationError, shell
-from api import IProgressBoxProvider
 
 
 class RootDispatcher(URLHandler, SessionPlugin, EventProcessor, Plugin):

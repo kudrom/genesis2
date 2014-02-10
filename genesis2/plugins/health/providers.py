@@ -1,8 +1,5 @@
-from genesis2.core.core import Plugin, Interface, implements
-
-
-class IMeter (Interface):
-    pass
+from genesis2.core.core import Plugin, implements
+from genesis2.interfaces.gui import IMeter
 
 
 class BaseMeter (Plugin):

@@ -1,15 +1,7 @@
-from genesis2.core.core import Interface, Plugin, implements
+from genesis2.core.core import Plugin, implements
 from genesis2.utils import *
+from genesis2.interfaces.resources import IComponent
 
-
-class IComponent (Interface):
-    """
-    Base interface for background components.
-
-    See :class:`Component`.
-    """
-    def run(self):
-        pass
 
 
 class Component (Plugin, BackgroundWorker):

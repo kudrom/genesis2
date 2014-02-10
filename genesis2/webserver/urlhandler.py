@@ -2,7 +2,8 @@ import re
 import cgi
 import inspect
 
-from genesis2.core.core import Interface, implements
+from genesis2.core.core import implements
+from genesis2.interfaces.gui import IURLHandler
 
 
 def url(uri):
@@ -22,37 +23,8 @@ def url(uri):
     def url_decorator(func):
         loc_urls[re.compile(uri)] = func.__name__
         return func
-    #def url_decorator
 
     return url_decorator
-#def url
-
-
-class IURLHandler(Interface):
-    """
-    Base interface for classes that can handle HTTP requests
-    """
-
-    def match_url(self, req):
-        """
-        Determines if the class can handle given request.
-
-        :param  req:    WSGI request environment
-        :type   req:    dict
-        :rtype:         bool
-        """
-
-    def url_handler(self, req, sr):
-        """
-        Should handle given request.
-
-        :param  req:    WSGI request environment
-        :type   req:    dict
-        :param  sr:     start_response callback for setting HTTP code and headers
-        :type   sr:     func(code, headers)
-        :returns:       raw response body
-        :rtype:         str
-        """
 
 
 class URLHandler(object):

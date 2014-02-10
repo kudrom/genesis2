@@ -4,9 +4,12 @@ import traceback
 from genesis2.core.core import Plugin
 from genesis2.ui import UI
 from genesis2 import apis
+from genesis2.interfaces.gui import IEventDispatcher, ICategoryProvider
+from genesis2.interfaces.resources import IModuleConfig
 
 
 def event(event_name):
+    # TODO: Doctest
     """ Decorator function to register event handlers
 
     >>> class a(object):
