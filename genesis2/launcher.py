@@ -8,7 +8,7 @@ from genesis2.webserver.middleware import AppDispatcher
 from genesis2.core.plugmgr import PluginLoader
 from genesis2 import version
 
-# TODO: I've deleted the deployed call because it's in root home
+# (kudrom) TODO: I've deleted the deployed call because it's in root home
 import genesis2.utils
 
 try:
@@ -116,10 +116,10 @@ def run_server(log_level=logging.INFO, config_file=''):
     PluginLoader.initialize(log, config.get('genesis', 'plugins'), platform)
     PluginLoader.load_plugins()
 
-    # TODO: Register a new ComponentMgr
-    # TODO: Register a new PluginMgr
+    # (kudrom) TODO: Register a new ComponentMgr
+    # (kudrom) TODO: Register a new PluginMgr
 
-    # TODO: we should use an iptables plugin
+    # (kudrom) TODO: we should use an iptables plugin
     # Make sure correct kernel modules are enabled
     genesis2.utils.shell('modprobe ip_tables')
 
@@ -128,7 +128,7 @@ def run_server(log_level=logging.INFO, config_file=''):
     port = config.getint('genesis', 'bind_port')
     log.info('Listening on %s:%d' % (host, port))
 
-    # TODO: SSL by default
+    # (kudrom) TODO: SSL by default
     # SSL params
     ssl = {}
     if config.getint('genesis', 'ssl') == 1:
@@ -147,7 +147,7 @@ def run_server(log_level=logging.INFO, config_file=''):
 
     config.set('server', server)
 
-    # TODO: In arch the syslog-ng service is disabled by default
+    # (kudrom) TODO: In arch the syslog-ng service is disabled by default
     try:
         syslog.openlog(
             ident='genesis',
@@ -160,7 +160,7 @@ def run_server(log_level=logging.INFO, config_file=''):
 
     server.serve_forever()
 
-    # TODO: What the hell is this?
+    # (kudrom) TODO: What the hell is this?
     if hasattr(server, 'restart_marker'):
         log.info('Restarting by request')
 

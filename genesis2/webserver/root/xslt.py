@@ -9,7 +9,7 @@ def attr(_, v, d):
     return d if v == [] or v == ['None'] else v[0]
 
 
-# TODO: I think the proposed use is misleading
+# (kudrom) TODO: I think the proposed use is misleading
 def css(_, v, d):
     v = d if v == [] or v == ['None'] else v[0]
     if v == 'auto':
@@ -24,17 +24,19 @@ def iif(_, q, a, b):
         return a if len(q) > 0 and q[0].lower() == 'true' else b
 
 
+# (kudrom) TODO: If we're using this to escape real js it should be secure
+# i don't like the duck typing but the exception handling is worse
 def jsesc(_, s):
-    try:
+    if "replace" in dir(s):
         return s.replace('\'', '\\')
-    except:
+    else:
         return s[0].replace('\'', '\\')
 
 
 def idesc(_, s):
-    try:
+    if "replace" in dir(s):
         return s.replace('/', '_').replace('.', '_')
-    except:
+    else:
         return s[0].replace('/', '_').replace('.', '_')
 
 

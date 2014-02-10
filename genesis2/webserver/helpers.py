@@ -9,7 +9,7 @@ from genesis2.interfaces.resources import IModuleConfig
 
 
 def event(event_name):
-    # TODO: Doctest
+    # (kudrom) TODO: Doctest
     """ Decorator function to register event handlers
 
     >>> class a(object):

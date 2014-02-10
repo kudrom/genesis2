@@ -1,6 +1,5 @@
 import traceback
 
-# TODO: For what is this import?
 import genesis2
 from genesis2.utils import *
 from genesis2.ui import *
@@ -155,7 +154,7 @@ class Application (PluginManager, Plugin):
         self.headers = headers
 
     def fix_length(self, content):
-        # TODO: maybe move this method to middleware
+        # (kudrom) TODO: maybe move this method to middleware
         has_content_length = False
         for header, value in self.headers:
             if header.upper() == 'CONTENT-LENGTH':

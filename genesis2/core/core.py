@@ -7,8 +7,7 @@ __all__ = ['Interface', 'implements', 'Plugin', 'PluginManager']
 import inspect
 import traceback
 
-# TODO: Uncomment
-#from genesis2.utils import PrioList
+from genesis2.utils import PrioList
 
 
 def implements(*interfaces):

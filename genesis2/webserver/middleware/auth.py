@@ -3,7 +3,7 @@ from base64 import b64encode
 from passlib.hash import sha512_crypt, bcrypt
 import time
 
-# TODO: Maybe it should be in a utils file
+# (kudrom) TODO: Maybe it should be in a utils file
 from genesis2.webserver.urlhandler import get_environment_vars
 
 
