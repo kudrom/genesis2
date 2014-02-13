@@ -1,13 +1,54 @@
-"""
-Base plugin-interface architecture for Genesis
-"""
-
-__all__ = ['Interface', 'implements', 'Plugin', 'PluginManager']
-
 import inspect
-import traceback
+import weakref
 
-from genesis2.utils import PrioList
+from pluginmgr import PluginManager
+from appmgr import AppManager
+from exceptions import AppInterfaceImplError
+
+
+class Singleton(type):
+    """
+    From https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+    I prefer to use Singleton classes instead of @staticmethod because in this way i
+    can use the __init__ method and initialize the fields there instead that in the
+    body of the class definition.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class Observable(object):
+    def __init__(self):
+        self.__observers = []
+
+    def add_observer(self, observer):
+        # Duck typing
+        if hasattr(observer, "notify"):
+            self.__observers.append(weakref.ref(observer, callback=self.remove_observer))
+
+    def remove_observer(self, observer):
+        if observer in self.__observers:
+            del self.__observers[observer]
+
+    def notify_observers(self):
+        for observer in self.__observers:
+            observer.notify()
+
+
+# (kudrom) TODO: Initialize it in launcher
+class GenesisManager():
+    __metaclass__ = Singleton
+
+    def __init__(self, config):
+        super(GenesisManager, self).__init__()
+        self.__config = config
+
+    def get_config(self):
+        return self.__config
 
 
 def implements(*interfaces):
@@ -41,13 +82,16 @@ def implements(*interfaces):
     # TODO: trac also all base interfaces (if needed)
 
 
-class Interface:
+class Interface(object):
     """ Base abstract class for all interfaces
 
     Can be used as callable (decorator)
     to check if Plugin implements all methods
     (internal use only)
     """
+
+    def __init__(self):
+        self._app_requirements = []
 
     def __call__(self, cls):
         # Check that target class supports all our interface methods
@@ -63,142 +107,6 @@ class Interface:
                 raise AttributeError(
                     "%s implementing interface %s, does not have '%s' method" %
                     (cls, self.__class__, method))
-
-
-class PluginManager (object):
-    """ Holds all registered classes, instances and implementations
-    You should have one class instantiated from both PluginManager and Plugin
-    to trigger plugins magick
-    """
-    # Class-wide properties
-    __classes = []
-    __plugins = {}
-    __tracking = False
-    __tracker = None
-
-    def __init__(self):
-        self.__instances = {}
-
-    @staticmethod
-    def class_register(cls):
-        """
-        Registers a new class
-
-        :param  cls:    class
-        :type   cls:    type
-        """
-        PluginManager.__classes.append(cls)
-        if PluginManager.__tracking:
-            PluginManager.__tracker.append(cls)
-
-    @staticmethod
-    def class_unregister(cls):
-        """
-        Unregisters a class
-
-        :param  cls:    class
-        :type   cls:    type
-        """
-        PluginManager.__classes.remove(cls)
-        for lst in PluginManager.__plugins.values():
-            if cls in lst:
-                lst.remove(cls)
-
-    @staticmethod
-    def class_list():
-        """
-        Lists all registered classes
-
-        :returns:       list(:class:`type`)
-        """
-        return PluginManager.__classes
-
-    @staticmethod
-    def plugin_list():
-        return PluginManager.__plugins
-
-    @staticmethod
-    def plugin_register(iface, cls):
-        """
-        Registers a :class:`Plugin` for implementing an :class:`Interface`
-
-        :param  iface:  interface
-        :type   iface:  type
-        :param  cls:    plugin
-        :type   cls:    :class:`Plugin`
-        """
-        lst = PluginManager.__plugins.setdefault(iface, PrioList())
-        for item in lst:
-            if str(item) == str(cls):
-                return
-        lst.append(cls)
-
-    @staticmethod
-    def plugin_get(iface):
-        """
-        Returns plugins that implement given :class:`Interface`
-
-        :param  iface:  interface
-        :type   iface:  type
-        """
-        return PluginManager.__plugins.get(iface, [])
-
-    @staticmethod
-    def start_tracking():
-        """
-        Starts internal registration tracker
-        """
-        PluginManager.__tracking = True
-        PluginManager.__tracker = []
-
-    @staticmethod
-    def stop_tracking():
-        """
-        Stops internal registration tracker and returns all classes
-        registered since calling ``start_tracking``
-        """
-        PluginManager.__tracking = False
-        return PluginManager.__tracker
-
-    def instance_get(self, cls, instantiate=False):
-        """
-        Gets a saved instance for the :class:`Plugin` subclass
-
-        :param  instantiate:  instantiate plugin if it wasn't instantiate before
-        :type   instantiate:  bool
-        """
-        if not self.plugin_enabled(cls):
-            return None
-        inst = self.__instances.get(cls)
-        if instantiate and inst is None:
-            if cls not in PluginManager.__classes:
-                raise Exception('Class "%s" is not registered' % cls.__name__)
-            try:
-                inst = cls(self)
-            except TypeError, e:
-                print traceback.format_exc()
-                raise Exception('Unable instantiate plugin %r (%s)' % (cls, e))
-
-        return inst
-
-    def instance_set(self, cls, inst):
-        self.__instances[cls] = inst
-
-    def instance_list(self):
-        return self.__instances
-
-    def plugin_enabled(self, cls):
-        """
-        Called to check if :class:`Plugin` is eligible for running on this system
-
-        :returns: bool
-        """
-        return True
-
-    def plugin_activated(self, plugin):
-        """
-        Called when a :class:`Plugin` is successfully instantiated
-        """
 
 
 class MetaPlugin (type):
@@ -298,6 +206,9 @@ class Plugin (object):
 
     platform = ['any']
 
+    def __init__(self):
+        self._implements = []
+
     def __new__(cls, *args, **kwargs):
         """ Returns a class instance,
         If it already instantiated, return it
@@ -329,3 +240,22 @@ class Plugin (object):
         Called when plugin class is being unloaded by
         :class:`genesis.plugmgr.PluginLoader`
         """
+
+
+class App(object):
+    __metaclass__ = MetaApp
+
+    def __init__(self):
+        self._uses = []
+
+
+class MetaApp(Singleton):
+    def __call__(cls, *args, **kwargs):
+        instance = super(MetaApp, cls).__call__(*args, **kwargs)
+        methods = dir(instance)
+        for interface in instance._uses:
+            requirements = interface()._app_requirements
+            for requirement in requirements:
+                if requirement not in methods:
+                    raise AppInterfaceImplError
+        AppManager().register(instance, *instance._uses)

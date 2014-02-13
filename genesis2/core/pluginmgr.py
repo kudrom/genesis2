@@ -2,17 +2,6 @@
 Tools for manipulating plugins and repository
 """
 
-__all__ = [
-    'BaseRequirementError',
-    'PlatformRequirementError',
-    'PluginRequirementError',
-    'ModuleRequirementError',
-    'SoftwareRequirementError',
-    'PluginLoader',
-    'RepositoryManager',
-    'PluginInfo',
-]
-
 import os
 import imp
 import sys
@@ -20,14 +9,45 @@ import traceback
 import weakref
 import urllib2
 
-from .exceptions import *
-from .core import PluginManager
+from exceptions import *
 from genesis2.plugins.workers.components import ComponentManager
 from genesis2.plugins.archives.confmanager import ConfManager
-from genesis2.utils import BackgroundWorker, shell, shell_status, download
+from genesis2.utils import BackgroundWorker, shell, shell_status, download, PrioList
 import genesis2
 
 RETRY_LIMIT = 10
+
+
+class PluginInfo:
+    """
+    Container for the plugin description
+    - ``upgradable`` - `bool`, if the plugin can be upgraded
+    - ``problem``- :class:`Exception` which occured while loading plugin, else ``None``
+    - ``deps`` - list of dependency tuples
+    And other fields read by :class:`PluginLoader` from plugin's ``__init__.py``
+    """
+
+    def __init__(self):
+        self.upgradable = False
+        self.problem = None
+        self.deps = []
+
+    def str_req(self):
+        """
+        Formats plugin's unmet requirements into human-readable string
+
+        :returns:    str
+        """
+
+        reqs = []
+        for p in self.deps:
+            if any(x in [PluginLoader.platform, 'any'] for x in p[0]):
+                for r in p[1]:
+                    try:
+                        PluginLoader.verify_dep(r)
+                    except Exception, e:
+                        reqs.append(str(e))
+        return ', '.join(reqs)
 
 
 class PluginLoader:
@@ -314,6 +334,142 @@ class PluginLoader:
             return os.path.join(os.path.split(__file__)[0], 'plugins')
 
 
+class PluginManager (object):
+    """ Holds all registered classes, instances and implementations
+    You should have one class instantiated from both PluginManager and Plugin
+    to trigger plugins magick
+    """
+    # Class-wide properties
+    __classes = []
+    __plugins = {}
+    __tracking = False
+    __tracker = None
+
+    def __init__(self):
+        self.__instances = {}
+
+    @staticmethod
+    def class_register(cls):
+        """
+        Registers a new class
+
+        :param  cls:    class
+        :type   cls:    type
+        """
+        PluginManager.__classes.append(cls)
+        if PluginManager.__tracking:
+            PluginManager.__tracker.append(cls)
+
+    @staticmethod
+    def class_unregister(cls):
+        """
+        Unregisters a class
+
+        :param  cls:    class
+        :type   cls:    type
+        """
+        PluginManager.__classes.remove(cls)
+        for lst in PluginManager.__plugins.values():
+            if cls in lst:
+                lst.remove(cls)
+
+    @staticmethod
+    def class_list():
+        """
+        Lists all registered classes
+
+        :returns:       list(:class:`type`)
+        """
+        return PluginManager.__classes
+
+    @staticmethod
+    def plugin_list():
+        return PluginManager.__plugins
+
+    @staticmethod
+    def plugin_register(iface, cls):
+        """
+        Registers a :class:`Plugin` for implementing an :class:`Interface`
+
+        :param  iface:  interface
+        :type   iface:  type
+        :param  cls:    plugin
+        :type   cls:    :class:`Plugin`
+        """
+        lst = PluginManager.__plugins.setdefault(iface, PrioList())
+        for item in lst:
+            if str(item) == str(cls):
+                return
+        lst.append(cls)
+
+    @staticmethod
+    def plugin_get(iface):
+        """
+        Returns plugins that implement given :class:`Interface`
+
+        :param  iface:  interface
+        :type   iface:  type
+        """
+        return PluginManager.__plugins.get(iface, [])
+
+    @staticmethod
+    def start_tracking():
+        """
+        Starts internal registration tracker
+        """
+        PluginManager.__tracking = True
+        PluginManager.__tracker = []
+
+    @staticmethod
+    def stop_tracking():
+        """
+        Stops internal registration tracker and returns all classes
+        registered since calling ``start_tracking``
+        """
+        PluginManager.__tracking = False
+        return PluginManager.__tracker
+
+    def instance_get(self, cls, instantiate=False):
+        """
+        Gets a saved instance for the :class:`Plugin` subclass
+
+        :param  instantiate:  instantiate plugin if it wasn't instantiate before
+        :type   instantiate:  bool
+        """
+        if not self.plugin_enabled(cls):
+            return None
+        inst = self.__instances.get(cls)
+        if instantiate and inst is None:
+            if cls not in PluginManager.__classes:
+                raise Exception('Class "%s" is not registered' % cls.__name__)
+            try:
+                inst = cls(self)
+            except TypeError, e:
+                print traceback.format_exc()
+                raise Exception('Unable instantiate plugin %r (%s)' % (cls, e))
+
+        return inst
+
+    def instance_set(self, cls, inst):
+        self.__instances[cls] = inst
+
+    def instance_list(self):
+        return self.__instances
+
+    def plugin_enabled(self, cls):
+        """
+        Called to check if :class:`Plugin` is eligible for running on this system
+
+        :returns: bool
+        """
+        return True
+
+    def plugin_activated(self, plugin):
+        """
+        Called when a :class:`Plugin` is successfully instantiated
+        """
+
+
 class RepositoryManager:
     """
     Manages official Genesis plugin repository. ``cfg`` is :class:`genesis.config.Config`
@@ -532,38 +688,6 @@ class RepositoryManager:
         self.update_installed()
         self.update_available()
         self.update_upgradable()
-
-
-class PluginInfo:
-    """
-    Container for the plugin description
-    - ``upgradable`` - `bool`, if the plugin can be upgraded
-    - ``problem``- :class:`Exception` which occured while loading plugin, else ``None``
-    - ``deps`` - list of dependency tuples
-    And other fields read by :class:`PluginLoader` from plugin's ``__init__.py``
-    """
-
-    def __init__(self):
-        self.upgradable = False
-        self.problem = None
-        self.deps = []
-
-    def str_req(self):
-        """
-        Formats plugin's unmet requirements into human-readable string
-
-        :returns:    str
-        """
-
-        reqs = []
-        for p in self.deps:
-            if any(x in [PluginLoader.platform, 'any'] for x in p[0]):
-                for r in p[1]:
-                    try:
-                        PluginLoader.verify_dep(r)
-                    except Exception, e:
-                        reqs.append(str(e))
-        return ', '.join(reqs)
 
 
 class LiveInstall(BackgroundWorker):

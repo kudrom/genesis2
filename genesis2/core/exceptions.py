@@ -112,3 +112,44 @@ class ImSorryDave(Exception):
         else:
             return ('%s can\'t be installed, as it depends on %s. Please '
                     'install that first.' % (self.target, self.depend))
+
+
+class AppInterfaceImplError(BaseRequirementError):
+    """
+    An app uses a interface that requires a method that the app doesn't provide.
+    """
+    def __init__(self, app, interface, method):
+        self.app = app
+        self.interface = interface
+        self.method = method
+
+    def __str__(self):
+        return ("%s can't be loaded because it doesn't implements the %s method that"
+                "the %s interface requires." % (self.app, self.method, self.interface))
+
+
+class AppRequirementError(BaseRequirementError):
+    """
+    Exception that means an app wasn't loaded due to
+    required plugin being unavailable
+    """
+
+    def __init__(self, plugin):
+        BaseRequirementError.__init__(self)
+        self.name = plugin['name']
+        self.package = plugin['package']
+
+    def __str__(self):
+        return 'requires plugin "%s"' % self.name
+
+
+class AccessError(BaseRequirementError):
+    """
+    There exists an access violation
+    """
+    def __init__(self, subject, object):
+        self.subject = subject
+        self.object = object
+
+    def __str__(self):
+        return "%s cannot use %s" % (self.subject, self.object)

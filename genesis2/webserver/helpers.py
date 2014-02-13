@@ -1,7 +1,7 @@
 import inspect
 import traceback
 
-from genesis2.core.core import Plugin
+from genesis2.core.core import Plugin, implements
 from genesis2.ui import UI
 from genesis2 import apis
 from genesis2.interfaces.gui import IEventDispatcher, ICategoryProvider
@@ -9,20 +9,10 @@ from genesis2.interfaces.resources import IModuleConfig
 
 
 def event(event_name):
-    # (kudrom) TODO: Doctest
-    """ Decorator function to register event handlers
-
-    >>> class a(object):
-    ...     @event('some/event')
-    ...     def test1 (self):
-    ...         pass
-    ...
-    ...     @event('other/event')
-    ...     def test2 (self):
-    ...         pass
-    >>> a._events
-    {'other/event': 'test2', 'some/event': 'test1'}
-    >>>
+    """
+        Decorator which implements a mechanism later used by EventProcessor
+        It's used by a plugin that wants to register a callback for a certain
+        event.
     """
     # Get parent exection frame
     frame = inspect.stack()[1][0]
@@ -35,15 +25,10 @@ def event(event_name):
     loc_events = locals.setdefault('_events', {})
 
     def event_decorator(func):
-        loc_events[event_name] = func.__name__
+        loc_events[event_name] = func
         return func
 
-    #def event_decorator
-
     return event_decorator
-
-
-#def event
 
 
 class EventProcessor(object):
@@ -55,15 +40,8 @@ class EventProcessor(object):
 
     def _get_event_handler(self, event):
         """
-        >>> class Test(EventProcessor):
-        ...     @event('test')
-        ...     def test(self):
-        ...         pass
-        ...
-        >>> t = Test()
-        >>> t._get_event_handler('test')
-        'test'
-        >>>
+            Private method to retrieve the proper method registered with the
+            event provided as first argument
         """
         for cls in self.__class__.mro():
             if '_events' in dir(cls):
@@ -72,21 +50,8 @@ class EventProcessor(object):
         return None
 
     def match_event(self, event):
-        """ Returns True if class (or any parent class) could handle event
-
-        >>> class Test(EventProcessor):
-        ...     @event('test')
-        ...     def test(self):
-        ...         pass
-        ...
-        >>> t = Test()
-        >>> t._get_event_handler('test')
-        'test'
-        >>> t.match_event('test')
-        True
-        >>> t.match_event('test2')
-        False
-        >>>
+        """
+            Returns True if class (or any parent class) could handle event
         """
         if self._get_event_handler(event) is not None:
             return True
@@ -94,29 +59,15 @@ class EventProcessor(object):
 
     def event(self, event, *params, **kwparams):
         """
-        Calls a handler method suitable for given event.
-
-        >>> class Test(EventProcessor):
-        ...     @event('test')
-        ...     def test(self, *p, **kw):
-        ...         print(kw)
-        ...
-        >>> t = Test()
-        >>> t.event('test', value='test')
-        {'value': 'test'}
-        >>>
+            Calls a handler method suitable for given event.
         """
         handler = self._get_event_handler(event)
         if handler is None:
-            return
-        try:
-            handler = self.__getattribute__(handler)
-        except AttributeError:
-            return
-
+            return None
         return handler(event, *params, **kwparams)
 
 
+# (kudrom) TODO: Disconnect self.app with a session manager
 class SessionPlugin(Plugin):
     """
     A base class for plugins attached to the current user's session.
@@ -231,6 +182,7 @@ class CategoryPlugin(SessionPlugin, EventProcessor):
             self.app.session['statusmsg'] = []
         self.app.session['statusmsg'].append((self.text, False))
 
+    # (kudrom) TODO: Redirect with JS? The URL is registered in webserver.root.root
     def redirapp(self, service, port, ssl=False):
         if self.app.get_backend(apis.services.IServiceManager).get_status(service) == 'running':
             if ssl:

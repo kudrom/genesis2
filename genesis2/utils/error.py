@@ -71,7 +71,7 @@ def make_report(app, err):
     """
     Formats a bug report.
     """
-    from genesis2.core.plugmgr import PluginLoader
+    from genesis2.core.pluginmgr import PluginLoader
     pr = ''
     for p in sorted(PluginLoader.list_plugins().keys()):
         pr += p + '\n'

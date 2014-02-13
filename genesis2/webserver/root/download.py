@@ -4,7 +4,7 @@ from genesis2.core.core import Plugin
 from genesis2.apis.decorators import url
 from genesis2.webserver.urlhandler import URLHandler
 from genesis2.utils import wsgi_serve_file
-from genesis2.core.plugmgr import PluginLoader
+from genesis2.core.pluginmgr import PluginLoader
 
 
 class Downloader(URLHandler, Plugin):

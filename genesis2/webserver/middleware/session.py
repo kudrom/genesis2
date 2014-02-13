@@ -3,6 +3,7 @@
 # Copyright (C) 2010 Dmitry Zamaruev (dmitry.zamaruev@gmail.com)
 
 
+# (kudrom) TODO: Doctest
 """
 This module provides simple session handling and WSGI Middleware.
 You should instantiate SessionStore, and pass it to WSGI middleware

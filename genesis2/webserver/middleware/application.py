@@ -3,7 +3,7 @@ import traceback
 import genesis2
 from genesis2.utils import *
 from genesis2.ui import *
-from genesis2.core.plugmgr import PluginLoader
+from genesis2.core.pluginmgr import PluginLoader
 import genesis2.ui.xslt as xslt
 from genesis2.core.core import PluginManager, Plugin
 from genesis2.interfaces.gui import IURLHandler, IXSLTFunctionProvider
@@ -41,11 +41,6 @@ class Application (PluginManager, Plugin):
         self.template_styles = []
         self.template_scripts = []
         self.layouts = {}
-
-        self.status = None
-        self.headers = None
-        self.environ = None
-        self.session = None
 
     def plugins_changed(self):
         """

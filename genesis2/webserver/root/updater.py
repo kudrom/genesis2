@@ -1,4 +1,4 @@
-from genesis2.core.plugmgr import RepositoryManager
+from genesis2.core.pluginmgr import RepositoryManager
 from genesis2.utils import *
 from genesis2.plugins.workers.components import Component
 
