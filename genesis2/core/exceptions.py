@@ -12,6 +12,7 @@ class PlatformRequirementError(BaseRequirementError):
     """
 
     def __init__(self, lst):
+        # (kudrom) TODO: Change all of these nasty calls into super
         BaseRequirementError.__init__(self)
         self.lst = lst
 
@@ -46,6 +47,39 @@ class PluginRequirementError(BaseRequirementError):
 
     def __str__(self):
         return 'requires plugin "%s"' % self.name
+
+
+class PluginAlreadyImplemented(BaseRequirementError):
+    """
+    Exception that means a plugin implemented a interface
+    that has been already implemented
+    """
+
+    def __init__(self, my_plugin, interface, already_plugin):
+        super(PluginAlreadyImplemented, self).__init__()
+        self.interface = interface
+        self.my_plugin = my_plugin
+        self.already_plugin = already_plugin
+
+    def __str__(self):
+        return 'Plugin %s has tried to implement the interface %s that has' \
+               'already been implemented by %s' % (self.my_plugin, self.interface, self.already_plugin)
+
+
+class PluginImplementationAbstract(BaseRequirementError):
+    """
+    Exception that means a pugin implemented a interface
+    that is declared as abstract
+    """
+
+    def __init__(self, plugin, interface):
+        super(PluginImplementationAbstract, self).__init__()
+        self.plugin = plugin
+        self.interface = interface
+
+    def __str__(self):
+        return 'Plugin %s implement the interface %s that is ' \
+               'declared as being abstract' % (self.plugin, self.interface)
 
 
 class ModuleRequirementError(BaseRequirementError):
@@ -124,6 +158,7 @@ class AppInterfaceImplError(BaseRequirementError):
         self.method = method
 
     def __str__(self):
+        # (kudrom) TODO: Reimplement the arguments to avoid classes/objects/methods and enforce the use of strings
         return ("%s can't be loaded because it doesn't implements the %s method that"
                 " the %s interface requires." % (self.app.__class__.__name__, self.method, self.interface.__name__))
 
@@ -143,7 +178,7 @@ class AppRequirementError(BaseRequirementError):
         return 'requires plugin "%s"' % self.name
 
 
-class AccessError(BaseRequirementError):
+class AccessDenied(BaseRequirementError):
     """
     There exists an access violation
     """

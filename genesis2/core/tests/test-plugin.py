@@ -1,46 +1,40 @@
 from unittest import TestCase
 
-from ..core import Interface, Plugin
-from ..pluginmgr import PluginManager
+from genesis2.core.core import Plugin
+from genesis2.core.tests.test_app import IFakeInterface
 
 
 class TestPluginManager(TestCase):
     def setUp(self):
-        class FakeInterface(Interface):
-            def __init__(self):
-                super(FakeInterface, self).__init__()
-                self._required_app.append(self.required)
-
-            def required(self):
-                pass
-
-            def simple_method(self):
-                pass
-
         class MyPlugin(Plugin):
             def __init__(self):
                 super(MyPlugin, self).__init__()
-                self._implements.append(FakeInterface)
+                self._implements.append(IFakeInterface)
 
             def simple_method(self):
                 pass
 
-        self.fake_interface = FakeInterface
+        self.fake_interface = IFakeInterface
         self.my_plugin = MyPlugin
 
     def test_incorrect_plugin(self):
-        """
-         Si interesa
-        """
-
-    def test_pluginmanager(self):
+        # raises PluginRequirement
         pass
 
-    def test_unique_plugin(self):
+    def test_abstract(self):
+        # raises PluginImplementationAbstract
         pass
 
-    def test_multiple_plugin(self):
+    def test_already(self):
+        # raises PluginAlreadyImplemented
         pass
 
-    def test_verify_dep(self):
+    def test_loading_plugins(self):
+        # test genesis2.apis using imp.load_module(genesis2.apis) after instantiating a plugin
+        # also hasattr(genesis2.apis, plugin)
         pass
+
+    def test_singleton_plugin(self):
+        pass
+
+    # The access control is tested in integration

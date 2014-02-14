@@ -1,143 +1,96 @@
 import imp
 import os
+import inspect
 from types import FunctionType
 
 from genesis2.core.utils import Singleton, Observable, GenesisManager
 from genesis2.core.exceptions import AppRequirementError, BaseRequirementError, \
-    ModuleRequirementError, AppInterfaceImplError
-from genesis2.core.pluginmgr import PluginManager
+    ModuleRequirementError, AppInterfaceImplError, PluginAlreadyImplemented, PluginImplementationAbstract, \
+    PluginRequirementError, AccessDenied
+import genesis2.apis
 
 
-class MetaPlugin (type):
+class MetaPlugin (Singleton):
     """
     Metaclass for Plugin
     """
 
-    def __new__(cls, name, bases, d):
-        """ Create new class """
+    def __call__(cls, *args, **kwargs):
+        instance = super(MetaPlugin, cls).__call__(*args, **kwargs)
+        for interface in instance._implements:
+            plugin = "P" + interface[1:]
+            if hasattr(genesis2.apis, plugin):
+                name_already = getattr(genesis2.apis, plugin).__class__.__name__
+                raise PluginAlreadyImplemented(plugin, interface.__name__, name_already)
+            if hasattr(interface, "abstract") and getattr(interface, "abstract"):
+                raise PluginImplementationAbstract(plugin, interface.__name__)
 
-        # Create new class
-        new_class = type.__new__(cls, name, bases, d)
+            methods = [method for method in dir(interface) if not method.startswith("_")
+                       if method not in interface._app_requirements]
+            for method in methods:
+                if method not in dir(instance):
+                    raise PluginRequirementError(method)
 
-        # If we creating base class, do nothing
-        if name == 'Plugin':
-            return new_class
+            # Store it
+            setattr(genesis2.apis, plugin, instance)
 
-        # Override __init__ for Plugins, for instantiation process
-        if True not in [issubclass(x, PluginManager) for x in bases]:
-            # Allow Plugins to have own __init__ without parameters
-            init = d.get('__init__')
-            if not init:
-                # Because we're replacing the initializer, we need to make sure
-                # that any inherited initializers are also called.
-                for init in [b.__init__._original for b in new_class.mro()
-                             if issubclass(b, Plugin)
-                             and '__init__' in b.__dict__]:
-                    break
-
-            def maybe_init(self, plugin_manager, init=init, cls=new_class):
-                if plugin_manager.instance_get(cls) is None:
-                    # Plugin is just created
-                    if init:
-                        init(self)
-                    if not self.multi_instance:
-                        plugin_manager.instance_set(cls, self)
-            maybe_init._original = init
-            new_class.__init__ = maybe_init
-
-        # If this is abstract class, do no record it
-        if d.get('abstract'):
-            return new_class
-
-        # Save created class for future reference
-        PluginManager.class_register(new_class)
-
-        # Collect all interfaces that this class implements
-        interfaces = d.get('_implements', [])
-        for base in [base for base in new_class.mro()[1:] if hasattr(base, '_implements')]:
-            interfaces.extend(base._implements)
-
-        # Delete duplicates, in case we inherit same Intarfaces
-        # or we need to override priority
-        _ints = []
-        _interfaces = []
-        for interface in interfaces:
-            _int = interface
-            if isinstance(interface, tuple):
-                _int = interface[0]
-
-            if _int not in _ints:
-                _ints.append(_int)
-                _interfaces.append(interface)
-
-        interfaces = _interfaces
-
-        # Check that class supports all needed methods
-        for interface in interfaces:
-            _int = interface
-            if isinstance(interface, tuple):
-                _int = interface[0]
-            _int()(new_class)
-
-        # Register plugin
-        for interface in interfaces:
-            if isinstance(interface, tuple):
-                PluginManager.plugin_register(interface[0], (new_class, interface[1]))
-            else:
-                PluginManager.plugin_register(interface, new_class)
-
-        return new_class
+        return instance
 
 
 class Plugin (object):
     """
     Base class for all plugins
 
-    - ``multi_instance`` - `bool`, if True, plugin will be not treated as a singleton
     - ``abstract`` - `bool`, abstract plugins are not registered in :class:`PluginManager`
-    - ``platform`` - `list(str)`, platforms where the Plugin can be run
-    - ``plugin_id`` - `str`, autoset to lowercase class name
     """
 
     __metaclass__ = MetaPlugin
 
-    multi_instance = False
-
-    platform = ['any']
-
     def __init__(self):
         self._implements = []
 
-    def __new__(cls, *args, **kwargs):
-        """ Returns a class instance,
-        If it already instantiated, return it
-        otherwise return new instance
-        """
-        if issubclass(cls, PluginManager):
-            # If we also a PluginManager, just create and return
-            self = super(Plugin, cls).__new__(cls)
-            self.plugin_manager = self
-            return self
+    def access_control(self, caller):
+        if isinstance(caller, App):
+            if hasattr(App, "_uses"):
+                for interface in getattr(App, "_uses"):
+                    if interface in self._implements:
+                        return True
+                return False
+            else:
+                return False
+        else:
+            return True
 
-        # Normal case when we are standalone plugin
-        self = None
-        plugin_manager = args[0]
-        if not cls.multi_instance:
-            self = plugin_manager.instance_get(cls)
+    def __getattribute__(self, item):
+        def access_denied(self):
+            raise AccessDenied(item)
+        locals = inspect.stack()[1][0].f_locals
+        if 'self' in locals:
+            caller = locals['self']
+            if self.access_control(caller):
+                return self.__dict__[item]
+            elif isinstance(self.__dict__[item], FunctionType):
+                return access_denied
+            else:
+                raise AccessDenied(item)
+        else:
+            raise TypeError("A plugin can only be accessed inside a method.")
 
-        if self is None:
-            self = super(Plugin, cls).__new__(cls)
-            self.plugin_manager = plugin_manager
-            self.plugin_id = cls.__name__.lower()
-            # Allow PluginManager implementation to update Plugin
-            plugin_manager.plugin_activated(self)
+    def __setattr__(self, key, value):
+        locals = inspect.stack()[1][0].f_locals
+        if 'self' in locals:
+            caller = locals['self']
+            if self.access_control(caller) and not isinstance(self.__dict__[key], FunctionType):
+                self.__dict__[key] = value
+            else:
+                raise AccessDenied(key)
 
-        return self
+    def __delattr__(self, item):
+        raise AccessDenied(item)
 
     def unload(self):
         """
-        Called when plugin class is being unloaded by
-        :class:`genesis.plugmgr.PluginLoader`
+        Called when plugin class is being unloaded by the installer plugin.
         """
 
 

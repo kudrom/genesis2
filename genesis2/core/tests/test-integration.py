@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from ..core import Plugin, App, Interface
-from ..exceptions import AccessError
+from ..exceptions import AccessDenied
 from ..pluginmgr import PluginManager
 
 
@@ -52,7 +52,7 @@ class TestDeployApp(TestCase):
                 PluginManager.grab_plugin(AnotherInterface)
 
         myapp = RogueApp()
-        self.assertRaises(AccessError, myapp.required)
+        self.assertRaises(AccessDenied, myapp.required)
 
     def test_correct_access(self):
         pass
