@@ -125,7 +125,7 @@ class AppInterfaceImplError(BaseRequirementError):
 
     def __str__(self):
         return ("%s can't be loaded because it doesn't implements the %s method that"
-                "the %s interface requires." % (self.app, self.method, self.interface))
+                " the %s interface requires." % (self.app.__class__.__name__, self.method, self.interface.__name__))
 
 
 class AppRequirementError(BaseRequirementError):
