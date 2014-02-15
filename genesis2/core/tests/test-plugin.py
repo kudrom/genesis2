@@ -71,24 +71,24 @@ class TestPluginManager(TestCase):
         self.assertEqual(ret, "it works")
 
     def test_whitout_uses_protected_access(self):
-        self.appmgr.path_apps =  "/".join((__file__.split("/")[:-1]))
+        self.appmgr.path_apps = "/".join((__file__.split("/")[:-1]))
         with self.assertRaises(AccessDenied):
             self.my_plugin().non_required()
 
     def test_with_invalid_uses_protected_access(self):
-        self.appmgr.path_apps =  "/".join((__file__.split("/")[:-1]))
+        self.appmgr.path_apps = "/".join((__file__.split("/")[:-1]))
         self._uses = []
         with self.assertRaises(AccessDenied):
             self.my_plugin().non_required()
 
     def test_protected_access(self):
-        self.appmgr.path_apps =  "/".join((__file__.split("/")[:-1]))
+        self.appmgr.path_apps = "/".join((__file__.split("/")[:-1]))
         self._uses = [IFakeInterface]
         ret = self.my_plugin().non_required()
         self.assertEqual(ret, "it works")
 
     def test_outer_scope_protected_access(self):
-        self.appmgr.path_apps =  "/".join((__file__.split("/")[:-1]))
+        self.appmgr.path_apps = "/".join((__file__.split("/")[:-1]))
         with self.assertRaises(TypeError):
             outer_scope()
 

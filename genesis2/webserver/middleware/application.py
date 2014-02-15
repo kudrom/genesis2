@@ -3,7 +3,6 @@ import traceback
 import genesis2
 from genesis2.utils import *
 from genesis2.ui import *
-from genesis2.core.pluginmgr import PluginLoader
 import genesis2.ui.xslt as xslt
 from genesis2.core.core import PluginManager, Plugin
 from genesis2.interfaces.gui import IURLHandler, IXSLTFunctionProvider

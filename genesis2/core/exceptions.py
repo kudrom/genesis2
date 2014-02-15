@@ -1,19 +1,16 @@
 class BaseRequirementError(Exception):
     """
-    Basic exception that means a plugin wasn't loaded due to unmet
-    dependencies
+    Basic exception that means an app/plugin wasn't loaded due to some violation
     """
 
 
 class PlatformRequirementError(BaseRequirementError):
     """
-    Exception that means a plugin wasn't loaded due to
-    unsupported platform
+    Exception that means a plugin wasn't loaded due to unsupported platform
     """
 
     def __init__(self, lst):
-        # (kudrom) TODO: Change all of these nasty calls into super
-        BaseRequirementError.__init__(self)
+        super(PlatformRequirementError, self).__init__()
         self.lst = lst
 
     def __str__(self):
@@ -22,39 +19,23 @@ class PlatformRequirementError(BaseRequirementError):
 
 class GenesisVersionRequirementError(BaseRequirementError):
     """
-    Exception that means a plugin wasn't loaded due to
-    unsupported Genesis version
+    Exception that means an app/plugin wasn't loaded due to unsupported Genesis version
     """
 
     def __init__(self, lst):
-        BaseRequirementError.__init__(self)
+        super(GenesisVersionRequirementError, self).__init__()
         self.lst = lst
 
     def __str__(self):
         return 'requires %s' % self.lst
 
 
-class PluginRequirementError(BaseRequirementError):
-    """
-    Exception that means a plugin wasn't loaded due to
-    required plugin being unavailable
-    """
-
-    def __init__(self, dep):
-        BaseRequirementError.__init__(self)
-        self.name = dep['name']
-        self.package = dep['package']
-
-    def __str__(self):
-        return 'requires plugin "%s"' % self.name
-
-
 class PluginInterfaceImplError(BaseRequirementError):
     """
-    Exception that means a plugin doesn't implement a method that
-    should implement by the definition of the Interface
+    Exception that means a plugin doesn't implement a method that should implement by the definition of the Interface
     """
     def __init__(self, plugin, interface, method):
+        super(PluginInterfaceImplError, self).__init__()
         self.plugin = plugin
         self.interface = interface
         self.method = method
@@ -63,10 +44,10 @@ class PluginInterfaceImplError(BaseRequirementError):
         return ("%s can't be loaded because it doesn't implements the %s method that"
                 " the %s interface requires." % (self.plugin, self.method, self.interface))
 
+
 class PluginAlreadyImplemented(BaseRequirementError):
     """
-    Exception that means a plugin implemented a interface
-    that has been already implemented
+    Exception that means a plugin implemented a interface that has been already implemented
     """
 
     def __init__(self, my_plugin, interface, already_plugin):
@@ -82,8 +63,7 @@ class PluginAlreadyImplemented(BaseRequirementError):
 
 class PluginImplementationAbstract(BaseRequirementError):
     """
-    Exception that means a pugin implemented a interface
-    that is declared as abstract
+    Exception that means a plugin implemented a interface that is declared as abstract
     """
 
     def __init__(self, plugin, interface):
@@ -98,13 +78,12 @@ class PluginImplementationAbstract(BaseRequirementError):
 
 class ModuleRequirementError(BaseRequirementError):
     """
-    Exception that means a plugin wasn't loaded due to
-    required Python module being unavailable
+    Exception that means a plugin wasn't loaded due to required Python module being unavailable
     """
 
-    def __init__(self, dep, restart):
-        BaseRequirementError.__init__(self)
-        self.name = dep['name'] if type(dep) == dict else dep
+    def __init__(self, name, restart):
+        super(ModuleRequirementError, self).__init__()
+        self.name = name
         self.restart = restart
 
     def __str__(self):
@@ -114,29 +93,13 @@ class ModuleRequirementError(BaseRequirementError):
             return 'requires Python module "%s"' % self.name
 
 
-class SoftwareRequirementError(BaseRequirementError):
-    """
-    Exception that means a plugin wasn't loaded due to
-    required software being unavailable
-    """
-
-    def __init__(self, dep):
-        BaseRequirementError.__init__(self)
-        self.name = dep['name']
-        self.pack = dep['package']
-        self.bin = dep['binary']
-
-    def __str__(self):
-        return 'requires application "%s" (package: %s, executable: %s)' % (self.name, self.pack, self.bin)
-
-
 class CrashedError(BaseRequirementError):
     """
     Exception that means a plugin crashed during load
     """
 
     def __init__(self, inner):
-        BaseRequirementError.__init__(self)
+        super(CrashedError, self).__init__()
         self.inner = inner
 
     def __str__(self):
@@ -148,6 +111,7 @@ class ImSorryDave(Exception):
     General exception when an attempted operation has a conflict
     """
     def __init__(self, target, depend, reason):
+        super(ImSorryDave, self).__init__()
         self.target = target
         self.reason = reason
         self.depend = depend
@@ -167,26 +131,25 @@ class AppInterfaceImplError(BaseRequirementError):
     An app uses a interface that requires a method that the app doesn't provide.
     """
     def __init__(self, app, interface, method):
+        super(AppInterfaceImplError, self).__init__()
         self.app = app
         self.interface = interface
         self.method = method
 
     def __str__(self):
-        # (kudrom) TODO: Reimplement the arguments to avoid classes/objects/methods and enforce the use of strings
         return ("%s can't be loaded because it doesn't implements the %s method that"
-                " the %s interface requires." % (self.app.__class__.__name__, self.method, self.interface.__name__))
+                " the %s interface requires." % (self.app, self.method, self.interface))
 
 
 class AppRequirementError(BaseRequirementError):
     """
-    Exception that means an app wasn't loaded due to
-    required plugin being unavailable
+    Exception that means an app wasn't loaded due to required plugin being unavailable
     """
 
-    def __init__(self, plugin):
-        BaseRequirementError.__init__(self)
-        self.name = plugin['name']
-        self.package = plugin['package']
+    def __init__(self, name, package):
+        super(AppRequirementError, self).__init__()
+        self.name = name
+        self.package = package
 
     def __str__(self):
         return 'requires plugin "%s"' % self.name
@@ -197,6 +160,7 @@ class AccessDenied(BaseRequirementError):
     There exists an access violation
     """
     def __init__(self, subject, object):
+        super(AccessDenied, self).__init__()
         self.subject = subject
         self.object = object
 

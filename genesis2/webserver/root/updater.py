@@ -1,4 +1,3 @@
-from genesis2.core.pluginmgr import RepositoryManager
 from genesis2.utils import *
 from genesis2.plugins.workers.components import Component
 
@@ -16,6 +15,7 @@ class FeedUpdater (Component):
         return self.feed
 
     def run(self):
+        # (kudrom) TODO: It's broken
         rm = RepositoryManager(self.app.config)
         feed_url = feedparser.parse('http://arkos.io/feed')
 

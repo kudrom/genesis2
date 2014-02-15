@@ -5,7 +5,6 @@ import syslog
 
 from genesis2.utils.config import Config
 from genesis2.webserver.middleware import AppDispatcher
-from genesis2.core.pluginmgr import PluginLoader
 from genesis2 import version
 
 # (kudrom) TODO: I've deleted the deployed call because it's in root home

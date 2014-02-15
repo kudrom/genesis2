@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-from ..core import Plugin, App, Interface
-from ..exceptions import AccessDenied
-from ..pluginmgr import PluginManager
+from genesis2.core.core import Plugin, App
+from genesis2.core.utils import Interface
+from genesis2.core.exceptions import AccessDenied
 
 
 class TestDeployApp(TestCase):
