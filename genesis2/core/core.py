@@ -6,30 +6,65 @@ from types import FunctionType
 from genesis2.core.utils import Singleton, Observable, GenesisManager
 from genesis2.core.exceptions import AppRequirementError, BaseRequirementError, \
     ModuleRequirementError, AppInterfaceImplError, PluginAlreadyImplemented, PluginImplementationAbstract, \
-    PluginRequirementError, AccessDenied
+    PluginInterfaceImplError, AccessDenied
 import genesis2.apis
+
+
+def access_control(func, instance):
+    def decorator(*args, **kwargs):
+        path_apps = AppManager().path_apps
+        caller_frame = inspect.stack()[1][0]
+        caller_path = caller_frame.f_code.co_filename
+        caller_locals = caller_frame.f_locals
+
+        if caller_path.startswith(path_apps):
+            if 'self' in caller_locals:
+                caller = caller_locals['self']
+                if hasattr(caller, "_uses"):
+                    for interface in caller._uses:
+                        interfaces = instance._implements
+                        if interface in interfaces:
+                            return func(*args, **kwargs)
+                    raise AccessDenied(caller.__class__.__name__, func.__name__)
+                else:
+                    raise AccessDenied(caller.__class__.__name__, func.__name__)
+            else:
+                raise TypeError("A plugin can only be accessed inside a method by an App.")
+        else:
+            return func(*args, **kwargs)
+
+    return decorator
 
 
 class MetaPlugin (Singleton):
     """
-    Metaclass for Plugin
+    Metaclass for Plugin that:
+        - Ensures that a plugin doesn't already implements one of the interfaces (PluginAlreadyImplemented)
+        - Ensures that one of the interfaces that tries to implement isn't abstract (PluginImplementationAbstract)
+        - Ensures that a plugin implements the methods of the interface that aren't required by the app and aren't
+          private (PluginInterfaceImplError)
+        - Registers the plugin in genesis2.apis with the proper notation (the name of the interface it implements
+          with the first I replaced by a P
     """
 
     def __call__(cls, *args, **kwargs):
         instance = super(MetaPlugin, cls).__call__(*args, **kwargs)
         for interface in instance._implements:
-            plugin = "P" + interface[1:]
+            plugin = "P" + interface.__name__[1:]
             if hasattr(genesis2.apis, plugin):
                 name_already = getattr(genesis2.apis, plugin).__class__.__name__
                 raise PluginAlreadyImplemented(plugin, interface.__name__, name_already)
-            if hasattr(interface, "abstract") and getattr(interface, "abstract"):
+            if hasattr(interface(), "abstract") and getattr(interface(), "abstract"):
                 raise PluginImplementationAbstract(plugin, interface.__name__)
 
             methods = [method for method in dir(interface) if not method.startswith("_")
-                       if method not in interface._app_requirements]
+                       if method not in interface()._app_requirements]
             for method in methods:
                 if method not in dir(instance):
-                    raise PluginRequirementError(method)
+                    raise PluginInterfaceImplError(instance.__class__.__name__, interface.__name__, method)
+                # Decorate all the methods to protect them against rogue access by Apps
+                decorated = access_control(getattr(instance, method), instance)
+                setattr(instance, method, decorated)
 
             # Store it
             setattr(genesis2.apis, plugin, instance)
@@ -39,9 +74,8 @@ class MetaPlugin (Singleton):
 
 class Plugin (object):
     """
-    Base class for all plugins
-
-    - ``abstract`` - `bool`, abstract plugins are not registered in :class:`PluginManager`
+    Base class for all plugins.
+    It executes the control access of the Apps.
     """
 
     __metaclass__ = MetaPlugin
@@ -51,9 +85,10 @@ class Plugin (object):
 
     def access_control(self, caller):
         if isinstance(caller, App):
-            if hasattr(App, "_uses"):
-                for interface in getattr(App, "_uses"):
-                    if interface in self._implements:
+            if hasattr(caller, "_uses"):
+                for interface in getattr(caller, "_uses"):
+                    interfaces = super(Plugin, self).__getattribute__("_implements")
+                    if interface in interfaces:
                         return True
                 return False
             else:
@@ -61,22 +96,33 @@ class Plugin (object):
         else:
             return True
 
-    def __getattribute__(self, item):
+    def __lgetattribute__(self, item):
         def access_denied(self):
             raise AccessDenied(item)
-        locals = inspect.stack()[1][0].f_locals
-        if 'self' in locals:
-            caller = locals['self']
-            if self.access_control(caller):
-                return self.__dict__[item]
-            elif isinstance(self.__dict__[item], FunctionType):
-                return access_denied
-            else:
-                raise AccessDenied(item)
-        else:
-            raise TypeError("A plugin can only be accessed inside a method.")
 
-    def __setattr__(self, key, value):
+        dict = super(Plugin, self).__getattribute__("__dict__")
+        path_apps = AppManager().path_apps
+        lframe = inspect.stack()[1][0]
+        caller_path = lframe.f_code.co_filename
+        locals = lframe.f_locals
+        if path_apps in caller_path:
+            if 'self' in locals:
+                caller = locals['self']
+                access_control = super(Plugin, self).__getattribute__("access_control")
+                if self is caller or access_control(caller):
+                    return dict[item]
+                elif isinstance(dict[item], FunctionType):
+                    return access_denied
+                else:
+                    raise AccessDenied(item)
+            else:
+                raise TypeError("A plugin can only be accessed inside a method by an App.")
+        else:
+            if item == "__dict__":
+                return dict
+            return dict[item]
+
+    def __lesetattr__(self, key, value):
         locals = inspect.stack()[1][0].f_locals
         if 'self' in locals:
             caller = locals['self']
@@ -85,7 +131,7 @@ class Plugin (object):
             else:
                 raise AccessDenied(key)
 
-    def __delattr__(self, item):
+    def __ledelattr__(self, item):
         raise AccessDenied(item)
 
     def unload(self):

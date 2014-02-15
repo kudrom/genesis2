@@ -49,6 +49,20 @@ class PluginRequirementError(BaseRequirementError):
         return 'requires plugin "%s"' % self.name
 
 
+class PluginInterfaceImplError(BaseRequirementError):
+    """
+    Exception that means a plugin doesn't implement a method that
+    should implement by the definition of the Interface
+    """
+    def __init__(self, plugin, interface, method):
+        self.plugin = plugin
+        self.interface = interface
+        self.method = method
+
+    def __str__(self):
+        return ("%s can't be loaded because it doesn't implements the %s method that"
+                " the %s interface requires." % (self.plugin, self.method, self.interface))
+
 class PluginAlreadyImplemented(BaseRequirementError):
     """
     Exception that means a plugin implemented a interface

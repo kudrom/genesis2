@@ -17,6 +17,9 @@ class Singleton(type):
 
 
 class Observable(object):
+    """
+    Class to add the observer design pattern.
+    """
     def __init__(self):
         self.__observers = []
 
@@ -47,27 +50,35 @@ class GenesisManager():
 
 
 class Interface(object):
-    """ Base abstract class for all interfaces
+    """
+    Base abstract class for all interfaces.
+    An interface is:
+        - An abstraction to wrap the access to a system's resource (only one) with a defined set of methods.
+        - Part of the mechanism that is used to retrieve a set of apps that use a defined interface (see AppManager).
+        - The specification/guide to build up the real wrapper around a set of resources via a Plugin.
+        - One of the most important concepts in genesis2.
 
-    Can be used as callable (decorator)
-    to check if Plugin implements all methods
-    (internal use only)
+    Explication:
+    An App will use a set of resources of the system to provide a defined functionality to the final user, to enforce
+    a control of the accesses by all the Apps in the system, each resource is wrapped by a plugin that controls it. An
+    interface is only implemented by a unique plugin and establish the set of methods that it must define, it also
+    serves to deny or allow access from an App to a Plugin (only if the app declares that it uses the interface, the
+    plugin that implements it will allow the accesses).
+    A plugin can implement various interfaces at the same time.
+    Interface inheritance is allowed but the base classes must be declared as abstract to forbid the implementation of
+    them by a Plugin. Interface inheritance is a really awesome way to model the services provided by the arkos
+    platform. More on this topic in the documentation.
+    Advantages:
+        - The platform problem (allow genesis to be installed in Arch, Debian or you name it) is solved, you simply
+          need to build a different set of plugins and all the Apps and all of the genesis core would work as usual.
+        - The floor of access control to the untrusted code of the Apps is established, allowing a dynamic growth of
+          the Apps community because we are allowing developers to build, test and deploy their own App without the
+          pain to being monitored by the arkOS team (to ensure the the app isn't malware).
+        - Basically the system is decoupled and both flexibility and scalability could be approached.
+
+    The app_requirements field enforce every App that uses the interface to implement a set of methods, this is used to
+    grant to the clients of the App that the App implements a set of methods (read CategoryPlugin to see an example).
     """
 
     def __init__(self):
         self._app_requirements = []
-
-    def __call__(self, cls):
-        # Check that target class supports all our interface methods
-        cls_methods = [m for m in dir(cls) if not m.startswith('_')]
-
-        # Check local interface methods
-        methods = [m for m in dir(self.__class__) if not m.startswith('_')]
-        # Filter out property methods
-        methods = [m for m in methods if m not in dir(property)]
-
-        for method in methods:
-            if method not in cls_methods:
-                raise AttributeError(
-                    "%s implementing interface %s, does not have '%s' method" %
-                    (cls, self.__class__, method))
