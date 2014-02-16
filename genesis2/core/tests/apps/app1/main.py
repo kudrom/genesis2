@@ -1,5 +1,5 @@
 from genesis2.core.core import App
-from genesis2.core.tests.test_app import IFakeInterface
+from genesis2.core.tests.interfaces import IFakeInterface
 
 
 class MyAwesomeApp(App):

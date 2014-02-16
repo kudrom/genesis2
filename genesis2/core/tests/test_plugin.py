@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from genesis2.core.core import Plugin
 from genesis2.core.utils import Interface
-from genesis2.core.tests.test_app import IFakeInterface
+from genesis2.core.tests.interfaces import IFakeInterface
 from genesis2.core.exceptions import PluginInterfaceImplError, PluginImplementationAbstract, PluginAlreadyImplemented, \
     AccessDenied
 from genesis2.core.core import AppManager
@@ -29,6 +29,8 @@ class TestPluginManager(TestCase):
     def tearDown(self):
         if hasattr(genesis2.apis, "PFakeInterface"):
             del genesis2.apis.PFakeInterface
+        if hasattr(genesis2.apis, "PAnotherInterface"):
+            del genesis2.apis.PAnotherInterface
 
     def test_incorrect_plugin(self):
         class MyPlugin2(Plugin):
@@ -91,6 +93,21 @@ class TestPluginManager(TestCase):
         self.appmgr.path_apps = "/".join((__file__.split("/")[:-1]))
         with self.assertRaises(TypeError):
             outer_scope()
+
+    def test_loader(self):
+        """
+        This test might fail if <from genesis2.core.tests.plugins import *> was called before (for example in
+        the integration tests) due to the impossibility to unload a module in python (http://bugs.python.org/issue9072)
+        That's because genesis2.core.tests.plugins are already loaded but in teardown i deleted the genesis2.apis
+        entries to reset the side effects of the other tests, so sys.modules has the genesis2.core.tests.plugins loaded
+        and it's impossible to rerun the bunch of __init__.py that would trigger the storing of the plugins in the apis
+        (reload doesn't do that by design).
+        """
+        from genesis2.core.tests.plugins import *
+        reload(genesis2.core.tests.plugins)
+        self.assertTrue(hasattr(genesis2.apis, "PFakeInterface"))
+        ret = genesis2.apis.PFakeInterface.non_required()
+        self.assertEqual(ret, "fucking awesome")
 
 
 def outer_scope():

@@ -146,10 +146,9 @@ class AppRequirementError(BaseRequirementError):
     Exception that means an app wasn't loaded due to required plugin being unavailable
     """
 
-    def __init__(self, name, package):
+    def __init__(self, name):
         super(AppRequirementError, self).__init__()
         self.name = name
-        self.package = package
 
     def __str__(self):
         return 'requires plugin "%s"' % self.name

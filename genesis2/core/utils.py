@@ -23,18 +23,23 @@ class Observable(object):
     def __init__(self):
         self.__observers = []
 
+    def get_n_observers(self):
+        return len(self.__observers)
+
     def add_observer(self, observer):
         # Duck typing
         if hasattr(observer, "notify"):
-            self.__observers.append(weakref.ref(observer, callback=self.remove_observer))
+            ref = weakref.ref(observer, self.remove_observer)
+            self.__observers.append(ref)
+            return ref
 
     def remove_observer(self, observer):
         if observer in self.__observers:
-            del self.__observers[observer]
+            self.__observers.remove(observer)
 
-    def notify_observers(self):
+    def notify_observers(self, msg, *args):
         for observer in self.__observers:
-            observer.notify()
+            observer().notify(self, msg, *args)
 
 
 # (kudrom) TODO: Initialize it in launcher

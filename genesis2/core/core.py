@@ -224,7 +224,7 @@ class AppManager(Observable):
         self._instance_apps = {}
         self._metadata = None
 
-    def _get_plain(self, mapping):
+    def _unroll(self, mapping):
         """
         A useful method to unroll the _apps or _instance_apps data structures.
         """
@@ -244,12 +244,12 @@ class AppManager(Observable):
         """
         if interface is None:
             # Return all the apps loaded in the system
-            instance_apps = self._get_plain(self._instance_apps)
-            apps = self._get_plain(self._apps)
+            instance_apps = self._unroll(self._instance_apps)
+            apps = self._unroll(self._apps)
             return list(filter(lambda app: id(app.instance) in instance_apps, apps))
         elif interface in self._instance_apps:
             instance_apps = self._instance_apps[interface]
-            apps = filter(lambda app: id(app.instance) in instance_apps, self._get_plain(self._apps))
+            apps = filter(lambda app: id(app.instance) in instance_apps, self._unroll(self._apps))
             if isinstance(flt, FunctionType):
                 apps = filter(flt, apps)
             return list(apps)
@@ -268,7 +268,7 @@ class AppManager(Observable):
         already registered in genesis2. Then the instance id is translated into an AppInfo stored in _apps, which is
         retrieved to the clients or accepted by them.
         """
-        instances = self._get_plain(self._instance_apps)
+        instances = self._unroll(self._instance_apps)
         if isinstance(instance, App) and id(instance) not in instances and len(interfaces) > 0:
             # The _metadata is set by load_app before the App calls register
             app = AppInfo(instance, self._metadata)
@@ -280,20 +280,35 @@ class AppManager(Observable):
                     self._apps[interface] = [app]
                     self._instance_apps[interface] = [id(instance)]
 
-    def unregister(self, app):
+                self.notify_observers("register", app, interface)
+
+    def unregister(self, app, name=None):
         """
         Once an app isn't any more in the filesystem, this method erase it from the genesis environment.
         """
+        if app is None:
+            apps = self.grab_apps()
+            if name is not None:
+                for application in apps:
+                    if application.name == name:
+                        app = application
+                        break
+                if app is None:
+                    return
+            else:
+                return
         instance_app = app.instance
-        if id(instance_app) in self._get_plain(self._instance_apps):
+        if id(instance_app) in self._unroll(self._instance_apps):
             # The app can only use a set of interfaces that must be defined in her metadata
             # so it cannot access any other interfaces and therefore
             for interface in app.interfaces:
                 # The user can restrict the app to a subset of accepted interfaces
-                iface = filter(lambda iface: iface.__name__ == interface, self._instance_apps.keys())
-                if len(iface) == 1 and id(instance_app) in self._instance_apps[iface[0]]:
-                    self._instance_apps[iface[0]].remove(id(instance_app))
-                    self._apps[iface[0]].remove(app)
+                ifaces = filter(lambda iface: iface.__name__ == interface, self._instance_apps.keys())
+                if len(ifaces) == 1 and id(instance_app) in self._instance_apps[ifaces[0]]:
+                    self._instance_apps[ifaces[0]].remove(id(instance_app))
+                    self._apps[ifaces[0]].remove(app)
+
+                self.notify_observers("unregister", app, ifaces[0])
 
     def load_apps(self):
         """
@@ -302,6 +317,10 @@ class AppManager(Observable):
         apps = [app for app in os.listdir(self.path_apps) if not app.startswith('.') if not app.endswith("pyc")]
         apps = [app[:-3] if app.endswith('.py') else app for app in apps]
         apps = list(set(apps))
+        apps.remove("__init__")
+
+        self._apps = {}
+        self._instance_apps = {}
 
         # (kudrom) TODO: I have to log it
         # The apps only depend on plugins that they use, so there cannot be a circular dependency (that's why i have
@@ -310,15 +329,21 @@ class AppManager(Observable):
         for app in apps:
             try:
                 self.load_app(app)
+            # (kudrom) TODO: Improve these exception handling
             except AppRequirementError, e:
                 #log.warn('App %s requires plugin %s, which is not available.' % (app, e.name))
                 pass
+            except ModuleRequirementError, e:
+                #log.warn('App %s cannot be loaded due to an ImportError' % (app))
+                self.unregister(None, name=app)
             except BaseRequirementError, e:
                 #log.warn('App %s %s' % (app, str(e)))
-                self.unregister(app)
-            except Exception:
-                self.unregister(app)
-                #log.info('Plugins loaded.')
+                self.unregister(None, name=app)
+            except Exception, e:
+                #log.warn('It has happened a nasty error while loading the app %s' % (app))
+                self.unregister(None, name=app)
+
+        self.notify_observers("load_apps")
 
     def load_app(self, name_app):
         """
