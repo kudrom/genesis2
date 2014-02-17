@@ -214,7 +214,7 @@ class AppManager(Observable):
     def __init__(self, path_apps=None):
         super(AppManager, self).__init__()
         if path_apps is None:
-            self.path_apps = GenesisManager().get_config().get("genesis", "apps_path")
+            self.path_apps = GenesisManager().get_config().get("genesis", "path_apps")
         else:
             self.path_apps = path_apps
         # I separate the __apps (which contains AppInfo wrappers) from the instance of an App

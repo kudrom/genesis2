@@ -1,6 +1,5 @@
 from utils import *
 from error import *
-from PrioList import PrioList
 from interlocked import *
 
 __all__ = [
@@ -30,6 +29,4 @@ __all__ = [
     'BackgroundWorker',
     'BackgroundProcess',
     'KThread',
-
-    'PrioList',
 ]
