@@ -1,4 +1,4 @@
-import platform
+import arkos_platform
 import json
 
 from genesis2.ui import UI, BasicTemplate
@@ -165,7 +165,7 @@ class RootDispatcher(URLHandler, SessionPlugin, EventProcessor, Plugin):
                     )
                 )
 
-        templ.append('_head', UI.HeadTitle(text='Genesis @ %s' % platform.node()))
+        templ.append('_head', UI.HeadTitle(text='Genesis @ %s' % arkos_platform.node()))
         templ.append('leftplaceholder', v)
         templ.append('version', UI.Label(text=('Genesis ' + version()), size=2))
         templ.insertText('cat-username', self.app.auth.user)

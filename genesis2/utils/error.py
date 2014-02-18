@@ -2,7 +2,7 @@ from genesis2.utils import *
 from genesis2 import version
 from genesis2.ui import UI
 
-import platform
+import arkos_platform
 import traceback
 
 
@@ -100,7 +100,7 @@ def make_report(app, err):
                shell('uname -a'),
                detect_platform(),
                detect_distro(),
-               '.'.join([str(x) for x in platform.python_version_tuple()]),
+               '.'.join([str(x) for x in arkos_platform.python_version_tuple()]),
                app.config.filename,
                err,
                pr,

@@ -15,7 +15,7 @@ from genesis2 import version
 from genesis2.core.core import AppManager
 from genesis2.core.utils import GenesisManager
 from genesis2.utils.config import Config
-from genesis2.utils.platform import detect_platform
+from genesis2.utils.arkos_platform import detect_platform
 from genesis2.utils.filesystem import create_files
 
 
@@ -28,7 +28,7 @@ def make_log(config_dir):
         dict_config = json.load(fd)
     except ValueError:
         # Shutdown
-        print "Error in the syntax of log.conf file."
+        print "*** Error in the syntax of log.conf file. ***"
         raise
 
     logging.config.dictConfig(dict_config)
@@ -61,9 +61,7 @@ def run_server(config_file=''):
     if os.path.exists(config_file) and os.path.isfile(config_file):
         config.load(config_file)
     else:
-        msg = "The %s doesn't exist" % config_file
-        logger.critical(msg)
-        print msg
+        logger.critical("The %s doesn't exist" % config_file)
         exit(-1)
 
     genesismgr = GenesisManager(config)

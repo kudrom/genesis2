@@ -1,7 +1,6 @@
 import time
 import subprocess
 import ntplib
-import platform
 import os
 import mimetypes
 import urllib2

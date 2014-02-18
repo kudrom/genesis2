@@ -7,7 +7,7 @@ __all__ = ['Config', 'ConfigProxy']
 import os
 from ConfigParser import ConfigParser
 
-from genesis2.utils import detect_platform
+from genesis2.utils.arkos_platform import detect_platform
 
 
 class Config(ConfigParser):
