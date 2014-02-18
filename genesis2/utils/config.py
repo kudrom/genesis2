@@ -20,7 +20,7 @@ class Config(ConfigParser):
 
     def __init__(self):
         ConfigParser.__init__(self)
-        # TODO: move this out
+        # TODO: move this out; (kudrom) -> it should be in the installer
         self.set('platform', detect_platform())
 
     def load(self, fn):
@@ -86,20 +86,6 @@ class Config(ConfigParser):
             if not self.has_section(section):
                 self.add_section(section)
             ConfigParser.set(self, section, val, value)
-
-    def has_option(self, section, name):
-        """
-        Checks if an parameter is present in the given section
-        :param  section:    Config file section
-        :type   section:    str
-        :param  name:        Value name
-        :type   name:        str
-        :returns:           bool
-        """
-        try:
-            return ConfigParser.has_option(self, section, name)
-        except:
-            return False
 
 
 class ConfigProxy:

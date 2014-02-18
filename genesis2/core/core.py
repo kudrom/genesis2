@@ -1,9 +1,11 @@
 import imp
 import os
 import inspect
+import logging
 from types import FunctionType
 
-from genesis2.core.utils import Singleton, Observable, GenesisManager
+from genesis2.core.utils import Singleton, Observable
+from genesis2.halter import stop_server
 from genesis2.core.exceptions import AppRequirementError, BaseRequirementError, \
     ModuleRequirementError, AppInterfaceImplError, PluginAlreadyImplemented, PluginImplementationAbstract, \
     PluginInterfaceImplError, AccessDenied
@@ -213,8 +215,10 @@ class AppManager(Observable):
 
     def __init__(self, path_apps=None):
         super(AppManager, self).__init__()
+        logger = logging.getLogger("genesis2")
         if path_apps is None:
-            self.path_apps = GenesisManager().get_config().get("genesis", "path_apps")
+            logger.critical("Path apps is None in AppManager.")
+            stop_server()
         else:
             self.path_apps = path_apps
         # I separate the __apps (which contains AppInfo wrappers) from the instance of an App
