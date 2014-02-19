@@ -13,7 +13,8 @@ from genesis2.core.tests.plugins import *
 
 class TestNormalUse(TestCase):
     def setUp(self):
-        self.appmgr = AppManager(path_apps="/".join((__file__.split("/")[:-1])) + "/apps")
+        self.appmgr = AppManager()
+        self.appmgr.path_apps = "/".join((__file__.split("/")[:-1])) + "/apps"
         self.appmgr.load_apps()
 
     def test_app_plugin(self):

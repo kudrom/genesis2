@@ -22,6 +22,10 @@ class TestPluginManager(TestCase):
             def non_protected(self):
                 return "it's not protected"
 
+        if hasattr(genesis2.apis, 'PFakeInterface'):
+            TestPluginManager.old_PFakeInterface = genesis2.apis.PFakeInterface
+        if hasattr(genesis2.apis, 'PAnotherInterface'):
+            TestPluginManager.old_PAnotherInterface = genesis2.apis.PAnotherInterface
         self.fake_interface = IFakeInterface
         self.my_plugin = MyPlugin
         self.appmgr = AppManager(path_apps="/".join((__file__.split("/")[:-1])) + "/apps")
@@ -96,14 +100,18 @@ class TestPluginManager(TestCase):
 
     def test_loader(self):
         """
-        This test might fail if <from genesis2.core.tests.plugins import *> was called before (for example in
-        the integration tests) due to the impossibility to unload a module in python (http://bugs.python.org/issue9072)
+        The old_PFakeInterface thing ensures that genesis2.apis is registered with the correct plugin.
         That's because genesis2.core.tests.plugins are already loaded but in teardown i deleted the genesis2.apis
         entries to reset the side effects of the other tests, so sys.modules has the genesis2.core.tests.plugins loaded
         and it's impossible to rerun the bunch of __init__.py that would trigger the storing of the plugins in the apis
         (reload doesn't do that by design).
         """
         from genesis2.core.tests.plugins import *
+        # Reset the registered plugins
+        if hasattr(TestPluginManager, 'old_PFakeInterface'):
+            genesis2.apis.PFakeInterface = TestPluginManager.old_PFakeInterface
+        if hasattr(TestPluginManager, 'old_PAnotherInterface'):
+            genesis2.apis.PAnotherInterface = TestPluginManager.old_PAnotherInterface
         reload(genesis2.core.tests.plugins)
         self.assertTrue(hasattr(genesis2.apis, "PFakeInterface"))
         ret = genesis2.apis.PFakeInterface.non_required()

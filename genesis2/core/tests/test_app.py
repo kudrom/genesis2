@@ -164,6 +164,7 @@ class TestApp(TestCase):
     def test_load_apps(self):
         load_app_mock = MagicMock()
         self.appmgr.path_apps = "/".join((__file__.split("/")[:-1])) + "/apps"
+        old_load = self.appmgr.load_app
         self.appmgr.load_app = load_app_mock
         notify_observers_mock = MagicMock()
         self.appmgr.notify_observers = notify_observers_mock
@@ -173,13 +174,18 @@ class TestApp(TestCase):
         calls = [call("load_apps")]
         notify_observers_mock.assert_has_calls(calls)
 
+        self.appmgr.load_app = old_load
+
     def test_load_app(self):
+        old_plugin = genesis2.apis.PFakeInterface
         genesis2.apis.PFakeInterface = object()
         self.appmgr.load_app("app1")
         apps = self.appmgr.grab_apps()
         self.assertEqual(len(apps), 1)
         app = apps[0]
         self.assertEqual(app.author, "kudrom")
+
+        genesis2.apis.PFakeInterface = old_plugin
 
     def test_load_app_with_not_implemented_interface(self):
         self.appmgr.path_apps = "/".join((__file__.split("/")[:-1])) + "/test_app_apps"
