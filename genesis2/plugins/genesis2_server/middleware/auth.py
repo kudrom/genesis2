@@ -1,10 +1,12 @@
 from hashlib import sha1
 from base64 import b64encode
 from passlib.hash import sha512_crypt, bcrypt
+import logging
 import time
 
 # (kudrom) TODO: Maybe it should be in a utils file
-from genesis2.webserver.urlhandler import get_environment_vars
+from ..urlhandler import get_environment_vars
+from genesis2.core.utils import GenesisManager
 
 
 def check_password(passw, hashpass):
@@ -43,42 +45,42 @@ class AuthManager(object):
     - ``user`` - `str`, current user logged in or None
     """
 
-    def __init__(self, config, app, dispatcher):
+    def __init__(self, dispatcher):
+        self.session = None
         self.user = None
-
-        self.app = app
-        app.auth = self
         self._dispatcher = dispatcher
-        self._log = config.get('log_facility')
+        self.config = GenesisManager().config
 
-        self._config = config
-        self._enabled = False
-        if config.has_option('genesis', 'auth_enabled'):
-            if config.getint('genesis', 'auth_enabled'):
-                # Check for 'users' section
-                if config.has_section('users'):
-                    if len(config.items('users')) > 0:
-                        self._enabled = True
-                    else:
-                        self._log.error('Authentication requested, but no users configured')
-                else:
-                    self._log.error('Authentication requested, but no [users] section')
+        logger = logging.getLogger('genesis2')
+
+        if self.config.has_section('users'):
+            if len(self.config.items('users')) > 0:
+                self._enabled = True
+            else:
+                logger.error('Authentication requested, but no users configured')
+        else:
+            logger.error('Authentication requested, but no [users] section')
 
     def deauth(self):
         """
         Deauthenticates current user.
         """
-        self.app.log.info('Session closed for user %s' % self.app.session['auth.user'])
-        self.app.session['auth.user'] = None
+        logger = logging.getLogger('genesis2')
+        logger.info('Session closed for user %s' % self.session['auth.user'])
+        if self.session is not None:
+            self.session['auth.user'] = None
+        else:
+            logger.warning('There\'s no session in the environ.')
 
     def __call__(self, environ, start_response):
-        session = environ['app.session']
+        self.session = environ['app.session']
+        logger = logging.getLogger('genesis2')
 
         if environ['PATH_INFO'] == '/auth-redirect':
             start_response('301 Moved Permanently', [('Location', '/')])
             return ''
 
-        self.user = session['auth.user'] if 'auth.user' in session else None
+        self.user = self.session['auth.user'] if 'auth.user' in self.session else None
         if not self._enabled:
             self.user = 'anonymous'
         if self.user is not None or environ['PATH_INFO'].startswith('/dl') \
@@ -88,19 +90,19 @@ class AuthManager(object):
         if environ['PATH_INFO'] == '/auth':
             vars_environ = get_environment_vars(environ)
             user = vars_environ.getvalue('username', '')
-            if self._config.has_option('users', user):
-                pwd = self._config.get('users', user)
+            if self.config.has_option('users', user):
+                pwd = self.config.get('users', user)
                 resp = vars_environ.getvalue('response', '')
                 if check_password(resp, pwd):
-                    self.app.log.info('Session opened for user %s from %s' % (user, environ['REMOTE_ADDR']))
-                    session['auth.user'] = user
+                    logger.info('Session opened for user %s from %s' % (user, environ['REMOTE_ADDR']))
+                    self.session['auth.user'] = user
                     start_response('200 OK', [
                         ('Content-type', 'text/plain'),
                         ('X-Genesis-Auth', 'ok'),
                     ])
                     return ''
 
-            self.app.log.error('Login failed for user %s from %s' % (user, environ['REMOTE_ADDR']))
+            logger.error('Login failed for user %s from %s' % (user, environ['REMOTE_ADDR']))
             time.sleep(2)
 
             start_response('403 Login Failed', [
@@ -109,10 +111,11 @@ class AuthManager(object):
             ])
             return 'Login failed'
 
-        templ = self.app.get_template('auth.xml')
-        start_response('200 OK', [('Content-type', 'text/html')])
-        start_response('200 OK', [
-            ('Content-type', 'text/html'),
-            ('X-Genesis-Auth', 'start'),
-        ])
-        return templ.render()
+        # (kudrom) TODO: I have to enable this
+        # templ = self.app.get_template('auth.xml')
+        # start_response('200 OK', [('Content-type', 'text/html')])
+        # start_response('200 OK', [
+        #     ('Content-type', 'text/html'),
+        #     ('X-Genesis-Auth', 'start'),
+        # ])
+        # return templ.render()

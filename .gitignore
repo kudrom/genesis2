@@ -4,3 +4,4 @@
 *.swp
 .vagrant
 log/
+*.pem

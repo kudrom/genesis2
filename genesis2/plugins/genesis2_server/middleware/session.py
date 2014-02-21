@@ -51,7 +51,7 @@ import os
 import time
 import Cookie
 import hashlib
-from genesis2.utils import ClassProxy
+from genesis2.utils.interlocked import ClassProxy
 
 
 def sha1(var):
@@ -90,8 +90,9 @@ class Session(dict):
     """ Session object
     Holds data between requests
     """
-    def __init__(self, id):
-        dict.__init__(self)
+
+    def __init__(self, id, **kwargs):
+        super(Session, self).__init__(**kwargs)
         self._id = id
         self._creationTime = self._accessTime = time.time()
 

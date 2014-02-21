@@ -1,4 +1,4 @@
-from genesis2.core.core import Interface
+from genesis2.core.utils import Interface
 
 
 class IConfigurable (Interface):

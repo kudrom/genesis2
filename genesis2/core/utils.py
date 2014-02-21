@@ -54,8 +54,17 @@ class GenesisManager():
         super(GenesisManager, self).__init__()
         self.__config = config
 
-    def get_config(self):
+    @property
+    def config(self):
         return self.__config
+
+    @config.deleter
+    def config(self):
+        pass
+
+    @config.setter
+    def config(self):
+        pass
 
 
 class Interface(object):

@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 # If you want to install the CA in another location, 
 # replace the dir below and copy the openssl.cnf with

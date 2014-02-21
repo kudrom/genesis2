@@ -182,7 +182,7 @@ class CategoryPlugin(SessionPlugin, EventProcessor):
             self.app.session['statusmsg'] = []
         self.app.session['statusmsg'].append((self.text, False))
 
-    # (kudrom) TODO: Redirect with JS? The URL is registered in webserver.root.root
+    # (kudrom) TODO: Redirect with JS? The URL is registered in genesis2_server.root.root
     def redirapp(self, service, port, ssl=False):
         if self.app.get_backend(apis.services.IServiceManager).get_status(service) == 'running':
             if ssl:

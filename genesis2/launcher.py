@@ -3,14 +3,6 @@ import logging
 import logging.config
 import json
 
-try:
-    from gevent.pywsgi import WSGIServer
-    http_server = 'gevent'
-except ImportError:
-    from wsgiref.simple_server import make_server
-    WSGIServer = lambda adr, **kw: make_server(adr[0], adr[1], kw['application'])
-    http_server = 'wsgiref'
-
 from genesis2 import version
 from genesis2.core.core import AppManager
 from genesis2.core.utils import GenesisManager
@@ -20,8 +12,8 @@ from genesis2.utils.filesystem import create_files
 
 
 def make_log(config_dir):
-    base_dir = "/".join(os.path.split(config_dir)[:-1])
-    create_files(base_dir, "/log/error.log", "/log/info.log")
+    base_dir = os.path.dirname(config_dir)
+    create_files("/log/error.log", "/log/info.log", base_dir=base_dir)
     fd = open(config_dir + "/log.conf")
 
     try:
@@ -64,7 +56,8 @@ def run_server(config_file=''):
         logger.critical("The %s doesn't exist" % config_file)
         exit(-1)
 
-    genesismgr = GenesisManager(config)
+    # (kudrom) TODO: I should delete the GenesisManager and substitute it with a Plugin
+    GenesisManager(config)
 
     platform = detect_platform()
     logger.info('Detected platform: %s' % platform)
@@ -86,42 +79,15 @@ def run_server(config_file=''):
     # Make sure correct kernel modules are enabled
     # genesis2.utils.shell('modprobe ip_tables')
 
-    # Start server
-    # host = config.get('genesis', 'bind_host')
-    # port = config.getint('genesis', 'bind_port')
-    # log.info('Listening on %s:%d' % (host, port))
+    if not hasattr(genesis2.apis, 'PGenesis2Server'):
+        logger.error('There\'s no plugin for PGenesis2Server registered in the system')
+        exit(-1)
 
-    # (kudrom) TODO: SSL by default
-    # SSL params
-    # ssl = {}
-    # if config.getint('genesis', 'ssl') == 1:
-    #     ssl = {
-    #         'keyfile':  config.get('genesis', 'cert_key'),
-    #         'certfile': config.get('genesis', 'cert_file'),
-    #     }
-
-    # log.info('Using HTTP server: %s' % http_server)
-
-    # server = WSGIServer(
-    #     (host, port),
-    #     application=AppDispatcher(config).dispatcher,
-    #     **ssl
-    # )
-
-    # config.set('server', server)
-
-    # (kudrom) TODO: In arch the syslog-ng service is disabled by default
-    # try:
-    #     syslog.openlog(
-    #         ident='genesis',
-    #         facility=syslog.LOG_AUTH,
-    #     )
-    # except:
-    #     syslog.openlog('genesis')
-
-    # log.info('Starting server')
-
-    # server.serve_forever()
+    # The server is a plugin to ease its replacement
+    logger.info('Starting server')
+    server = getattr(genesis2.apis, 'PGenesis2Server')
+    server.initialize(config)
+    server.serve_forever()
 
     # (kudrom) TODO: What the hell is this?
     # if hasattr(server, 'restart_marker'):

@@ -1,4 +1,8 @@
-from genesis2.core.core import Interface
+from genesis2.core.utils import Interface
+
+
+class IGenesis2Server(Interface):
+    pass
 
 
 class ICategoryProvider (Interface):

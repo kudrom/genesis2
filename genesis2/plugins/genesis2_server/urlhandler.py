@@ -2,8 +2,8 @@ import re
 import cgi
 import inspect
 
-from genesis2.core.core import implements
 from genesis2.interfaces.gui import IURLHandler
+from genesis2.core.core import Plugin
 
 
 def url(uri):
@@ -27,12 +27,15 @@ def url(uri):
     return url_decorator
 
 
-class URLHandler(object):
+class URLHandler(Plugin):
     """
     Base class that handles HTTP requests based on its methods decorated with
     :func:url
     """
-    implements(IURLHandler)
+
+    def __init__(self):
+        super(URLHandler, self).__init__()
+        self._implements.append(IURLHandler)
 
     def _get_url_handler(self, uri):
         for cls in self.__class__.mro():

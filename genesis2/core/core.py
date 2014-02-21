@@ -260,8 +260,8 @@ class AppManager(Observable):
         elif len(self._instance_apps) == 0:
             return []
         else:
-            # (kudrom) TODO: log it
-            return
+            logger = logging.getLogger('genesis2')
+            logger.warning('Interface %s doesn\'t exists' % interface)
 
     # Is called by the app when it is instanced
     def register(self, instance, *interfaces):
@@ -326,25 +326,24 @@ class AppManager(Observable):
         self._apps = {}
         self._instance_apps = {}
 
-        # (kudrom) TODO: I have to log it
+        logger = logging.getLogger('genesis2')
+
         # The apps only depend on plugins that they use, so there cannot be a circular dependency (that's why i have
         # deleted from the old genesis).
         # The only problem is if the plugin that is used by the app isn't loaded.
         for app in apps:
             try:
                 self.load_app(app)
-            # (kudrom) TODO: Improve these exception handling
             except AppRequirementError, e:
-                #log.warn('App %s requires plugin %s, which is not available.' % (app, e.name))
-                pass
+                logger.warning('App %s requires plugin %s, which is not available.' % (app, e.name))
             except ModuleRequirementError, e:
-                #log.warn('App %s cannot be loaded due to an ImportError' % (app))
+                logger.warning('App %s cannot be loaded due to an ImportError' % app)
                 self.unregister(None, name=app)
             except BaseRequirementError, e:
-                #log.warn('App %s %s' % (app, str(e)))
+                logger.warning('App %s %s' % (app, str(e)))
                 self.unregister(None, name=app)
             except Exception, e:
-                #log.warn('It has happened a nasty error while loading the app %s' % (app))
+                logger.warning('It has happened a nasty error while loading the app %s' % app)
                 self.unregister(None, name=app)
 
         self.notify_observers("load_apps")
