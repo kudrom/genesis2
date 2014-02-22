@@ -86,10 +86,5 @@ class TestsSessionMiddleware(TestCase):
         self.assertEqual(sess['test-123'], 'value')
 
 
-class AuthMiddleware(TestCase):
-    def test_dauth(self):
-        pass
-
-
 class DispatcherMiddleware(TestCase):
     pass

@@ -1,7 +1,7 @@
 AUTHOR = "kudrom"
-NAME = "requirementError"
+PKGNAME = "requirementError"
+PKGINTERFACES = ["IUnimplementedInterface"]
 DESCRIPTION = "An awesome app"
 HOMEPAGE = "http://www.example.com"
 ICON = "hello-icon"
-INTERFACES = ["IUnimplementedInterface"]
 MODULES = []

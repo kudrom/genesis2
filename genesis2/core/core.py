@@ -177,12 +177,13 @@ class AppInfo(object):
     """
     def __init__(self, instance, mod):
         self.__instance = instance
+        self.__name = instance.__class__.__name__ if not hasattr(instance, 'NAME') else instance.NAME
         self.__author = mod.AUTHOR
-        self.__name = mod.NAME
+        self.__pkgname = mod.PKGNAME
         self.__description = mod.DESCRIPTION
         self.__homepage = mod.HOMEPAGE
         self.__icon = mod.ICON
-        self.__interfaces = mod.INTERFACES
+        self.__interfaces = instance._uses
 
     # This is a little hack to automatize the setup of properties
     def __getter(self, variable):
@@ -197,6 +198,7 @@ class AppInfo(object):
     instance = property(__getter(None, "__instance"), __nop, __nop)
     author = property(__getter(None, "__author"), __nop, __nop)
     name = property(__getter(None, "__name"), __nop, __nop)
+    pkgname = property(__getter(None, "__pkgname"), __nop, __nop)
     description = property(__getter(None, "__description"), __nop, __nop)
     homepage = property(__getter(None, "__homepage"), __nop, __nop)
     icon = property(__getter(None, "__icon"), __nop, __nop)
@@ -303,11 +305,9 @@ class AppManager(Observable):
                 return
         instance_app = app.instance
         if id(instance_app) in self._unroll(self._instance_apps):
-            # The app can only use a set of interfaces that must be defined in her metadata
-            # so it cannot access any other interfaces and therefore
             for interface in app.interfaces:
                 # The user can restrict the app to a subset of accepted interfaces
-                ifaces = filter(lambda iface: iface.__name__ == interface, self._instance_apps.keys())
+                ifaces = filter(lambda iface: iface == interface, self._instance_apps.keys())
                 if len(ifaces) == 1 and id(instance_app) in self._instance_apps[ifaces[0]]:
                     self._instance_apps[ifaces[0]].remove(id(instance_app))
                     self._apps[ifaces[0]].remove(app)
@@ -368,7 +368,7 @@ class AppManager(Observable):
         # The WD is the root of genesis2 project and the plugins are already loaded (see launcher) so...
         genesis2 = imp.load_module("genesis2", *imp.find_module("genesis2"))
         plugins = dir(imp.load_module("genesis2.apis", *imp.find_module("apis", genesis2.__path__)))
-        for interface in self._metadata.INTERFACES:
+        for interface in self._metadata.PKGINTERFACES:
             plugin = "P" + interface[1:]
             if not plugin in plugins:
                 raise AppRequirementError(plugin)
@@ -379,7 +379,7 @@ class AppManager(Observable):
             # __metadata to register the plugin in __apps
             try:
                 AppRegister()._classes = []
-                imp.load_module(self._metadata.NAME + "." + submod, *imp.find_module(submod, self._metadata.__path__))
+                imp.load_module(self._metadata.PKGNAME + "." + submod, *imp.find_module(submod, self._metadata.__path__))
                 for cls in AppRegister()._classes:
                     cls()
             except ImportError, e:

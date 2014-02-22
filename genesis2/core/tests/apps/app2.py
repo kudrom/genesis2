@@ -1,7 +1,7 @@
 AUTHOR = "kudrom"
-NAME = "app2"
+PKGNAME = "app2"
+PKGINTERFACES = ["IFakeInterface"]
 DESCRIPTION = "An awesome app"
 HOMEPAGE = "http://www.example.com"
 ICON = "hello-icon"
-INTERFACES = ["IFakeInterface"]
 MODULES = []

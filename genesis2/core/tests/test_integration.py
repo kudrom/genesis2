@@ -18,7 +18,7 @@ class TestNormalUse(TestCase):
         self.appmgr.load_apps()
 
     def test_app_plugin(self):
-        apps = self.appmgr.grab_apps(IFakeInterface, flt=lambda app: app.instance.__class__.__name__ == "IntegrationApp")
+        apps = self.appmgr.grab_apps(IFakeInterface, flt=lambda app: app.name == "IntegrationApp")
         self.assertEqual(len(apps), 1)
         app = apps[0]
         self.assertEqual(app.instance.required(), "fucking awesome: I agree")

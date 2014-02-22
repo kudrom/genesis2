@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 from mock import patch, MagicMock, call
 
@@ -25,23 +26,14 @@ class TestApp(TestCase):
             def required(self):
                 return "it worked"
 
+        # Mocks the package/module metadata
         class MockMetadata(object):
             def __init__(self):
                 self.AUTHOR = "kudrom"
-                self.NAME = "Testing"
+                self.PKGNAME = "Testing"
                 self.DESCRIPTION = "An awesome app"
                 self.HOMEPAGE = "http://www.example.com"
                 self.ICON = "hello-icon"
-                self.INTERFACES = ["IFakeInterface"]
-
-        # This is only used by test_app_info
-        self.metadata = MagicMock()
-        self.metadata.AUTHOR = "kudrom"
-        self.metadata.NAME = "Testing"
-        self.metadata.DESCRIPTION = "An awesome app"
-        self.metadata.HOMEPAGE = "http://www.example.com"
-        self.metadata.ICON = "hello-icon"
-        self.metadata.INTERFACES = [IFakeInterface]
 
         # Constructors
         self.my_app = MyApp
@@ -151,15 +143,37 @@ class TestApp(TestCase):
         self.assertEqual(apps[0].instance, myapp)
 
     def test_app_info(self):
-        instance = MagicMock()
-        app = AppInfo(instance, self.metadata)
+        class AppTesting(object):
+            def __init__(self):
+                self._uses = [IFakeInterface]
+        instance = AppTesting()
+        metadata = self.mockmetadata()
+        app = AppInfo(instance, metadata)
         self.assertEqual(app.instance, instance)
-        self.assertEqual(app.author, self.metadata.AUTHOR)
-        self.assertEqual(app.name, self.metadata.NAME)
-        self.assertEqual(app.description, self.metadata.DESCRIPTION)
-        self.assertEqual(app.homepage, self.metadata.HOMEPAGE)
-        self.assertEqual(app.icon, self.metadata.ICON)
-        self.assertEqual(app.interfaces, self.metadata.INTERFACES)
+        self.assertEqual(app.author, metadata.AUTHOR)
+        self.assertEqual(app.pkgname, metadata.PKGNAME)
+        self.assertEqual(app.name, 'AppTesting')
+        self.assertEqual(app.description, metadata.DESCRIPTION)
+        self.assertEqual(app.homepage, metadata.HOMEPAGE)
+        self.assertEqual(app.icon, metadata.ICON)
+        self.assertEqual(app.interfaces, [IFakeInterface])
+
+    def test_app_info_name(self):
+        class AppTesting(object):
+            def __init__(self):
+                self._uses = [IFakeInterface]
+                self.NAME = 'RandomName'
+        instance = AppTesting()
+        metadata = self.mockmetadata()
+        app = AppInfo(instance, metadata)
+        self.assertEqual(app.instance, instance)
+        self.assertEqual(app.author, metadata.AUTHOR)
+        self.assertEqual(app.pkgname, metadata.PKGNAME)
+        self.assertEqual(app.name, 'RandomName')
+        self.assertEqual(app.description, metadata.DESCRIPTION)
+        self.assertEqual(app.homepage, metadata.HOMEPAGE)
+        self.assertEqual(app.icon, metadata.ICON)
+        self.assertEqual(app.interfaces, [IFakeInterface])
 
     def test_load_apps(self):
         load_app_mock = MagicMock()
@@ -177,7 +191,7 @@ class TestApp(TestCase):
         self.appmgr.load_app = old_load
 
     def test_load_app(self):
-        old_plugin = genesis2.apis.PFakeInterface
+        old_plugin = None if not hasattr(genesis2.apis, 'PFakeInterface') else genesis2.apis.PFakeInterface
         genesis2.apis.PFakeInterface = object()
         self.appmgr.load_app("app1")
         apps = self.appmgr.grab_apps()
@@ -188,6 +202,6 @@ class TestApp(TestCase):
         genesis2.apis.PFakeInterface = old_plugin
 
     def test_load_app_with_not_implemented_interface(self):
-        self.appmgr.path_apps = "/".join((__file__.split("/")[:-1])) + "/test_app_apps"
+        self.appmgr.path_apps = os.path.join(os.path.dirname(__file__), "test_app_apps")
         with self.assertRaises(AppRequirementError):
             self.appmgr.load_app("requirementErrorApp")

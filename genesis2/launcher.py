@@ -12,6 +12,7 @@ from genesis2.utils.filesystem import create_files
 
 
 def make_log(config_dir):
+    # (kudrom) TODO: Rotate the logs
     base_dir = os.path.dirname(config_dir)
     create_files("/log/error.log", "/log/info.log", base_dir=base_dir)
     fd = open(config_dir + "/log.conf")
