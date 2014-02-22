@@ -68,6 +68,7 @@ class AuthManager(object):
         logger = logging.getLogger('genesis2')
         logger.info('Session closed for user %s' % self.session['auth.user'])
         if self.session is not None:
+            # (kudrom) TODO: We should regenerate the sessions here definitely, it's extremly unsecure
             self.session['auth.user'] = None
         else:
             logger.warning('There\'s no session in the environ.')
