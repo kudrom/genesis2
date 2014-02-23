@@ -58,7 +58,7 @@ class PluginAlreadyImplemented(BaseRequirementError):
 
     def __str__(self):
         return 'Plugin %s has tried to implement the interface %s that has' \
-               'already been implemented by %s' % (self.my_plugin, self.interface, self.already_plugin)
+               ' already been implemented by %s' % (self.my_plugin, self.interface, self.already_plugin)
 
 
 class PluginImplementationAbstract(BaseRequirementError):

@@ -97,10 +97,45 @@ class Plugin (object):
     def __init__(self):
         self._implements = []
 
+        # Metadata
+        self.name = ''
+        self.pkgname = ''
+        self.version = ''
+        self.author = ''
+        self.homepage = ''
+
     def unload(self):
         """
         Called when plugin class is being unloaded by the installer plugin.
         """
+
+
+class PluginLoader(object):
+    """
+    Load the plugins in a directory.
+    """
+    __metaclass__ = Singleton
+
+    def __init__(self):
+        # Only a call per launcher is allowed to avoid the hot-install of plugins
+        self.__called = False
+
+    def load_plugins(self, dir='genesis2', config_path='configs/genesis2.conf'):
+        if self.__called is False:
+            logger = logging.getLogger('genesis2')
+            plugins_dir = os.path.join(os.getcwd(), dir)
+            plugins_module = imp.load_module('plugins', *imp.find_module('plugins', [plugins_dir]))
+            # This is used by the GenesisConf plugin, to see why read the docs.
+            setattr(plugins_module, 'config_path', config_path)
+            if hasattr(plugins_module, 'PLUGINS'):
+                for plugin in plugins_module.PLUGINS:
+                    try:
+                        imp.load_module(plugin, *imp.find_module(plugin, plugins_module.__path__))
+                    except ImportError:
+                        logger.warning('Plugin %s cannot be loaded in %s' % (plugin, plugins_dir))
+            else:
+                logger.error('PLUGINS attribute is missing in %s' % plugins_dir)
+            self.__called = True
 
 
 class AppRegister(object):
@@ -180,6 +215,7 @@ class AppInfo(object):
         self.__name = instance.__class__.__name__ if not hasattr(instance, 'NAME') else instance.NAME
         self.__author = mod.AUTHOR
         self.__pkgname = mod.PKGNAME
+        self.__version = mod.VERSION
         self.__description = mod.DESCRIPTION
         self.__homepage = mod.HOMEPAGE
         self.__icon = mod.ICON
@@ -199,6 +235,7 @@ class AppInfo(object):
     author = property(__getter(None, "__author"), __nop, __nop)
     name = property(__getter(None, "__name"), __nop, __nop)
     pkgname = property(__getter(None, "__pkgname"), __nop, __nop)
+    version = property(__getter(None, "__version"), __nop, __nop)
     description = property(__getter(None, "__description"), __nop, __nop)
     homepage = property(__getter(None, "__homepage"), __nop, __nop)
     icon = property(__getter(None, "__icon"), __nop, __nop)
@@ -379,7 +416,7 @@ class AppManager(Observable):
             # __metadata to register the plugin in __apps
             try:
                 AppRegister()._classes = []
-                imp.load_module(self._metadata.PKGNAME + "." + submod, *imp.find_module(submod, self._metadata.__path__))
+                imp.load_module(self._metadata.__name__ + "." + submod, *imp.find_module(submod, self._metadata.__path__))
                 for cls in AppRegister()._classes:
                     cls()
             except ImportError, e:

@@ -1,3 +1,4 @@
-from plugin import *
-from alehop_plugin import *
-
+PLUGINS = [
+    'plugin',
+    'alehop_plugin'
+]

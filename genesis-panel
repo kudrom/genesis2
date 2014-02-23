@@ -64,12 +64,12 @@ if __name__ == '__main__':
 
     # Find default config file
     if not config_file:
-        # Check for config file in /etc/genesis/genesis.conf
-        if os.path.isfile('/etc/genesis/genesis.conf'):
-            config_file = '/etc/genesis/genesis.conf'
-        elif os.path.isfile(os.path.join(sys.path[0], 'genesis.conf')):
+        # Check for config file in /etc/genesis/genesis2.conf
+        if os.path.isfile('/etc/genesis/genesis2.conf'):
+            config_file = '/etc/genesis/genesis2.conf'
+        elif os.path.isfile(os.path.join(sys.path[0], 'genesis2.conf')):
             # Try local config file
-            config_file = os.path.join(sys.path[0], 'genesis.conf')
+            config_file = os.path.join(sys.path[0], 'genesis2.conf')
     
     if action == 'run':
         from genesis2.launcher import run_server

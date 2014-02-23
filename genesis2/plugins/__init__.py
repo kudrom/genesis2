@@ -1,1 +1,3 @@
-from genesis2_server import *
+PLUGINS = [
+    'genesis2_server'
+]

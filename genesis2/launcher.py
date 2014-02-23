@@ -37,7 +37,7 @@ def run_server(config_file=''):
             print "Error in the config file."
     else:
         config_dir = os.getcwd() + "/configs"
-        config_file = config_dir + "/genesis.conf"
+        config_file = config_dir + "/genesis2.conf"
 
     make_log(config_dir)
     logger = logging.getLogger("genesis2")

@@ -42,11 +42,10 @@ class Observable(object):
             observer().notify(self, msg, *args)
 
 
-# (kudrom) TODO: Initialize it in launcher
 class GenesisManager():
     """
     Here's where some hot genesis objects should be referenced to allow that anyone could use them.
-    One clear example is the ParserConfig of genesis.conf.
+    One clear example is the ParserConfig of genesis2.conf.
     """
     __metaclass__ = Singleton
 
