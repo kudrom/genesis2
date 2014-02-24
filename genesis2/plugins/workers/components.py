@@ -1,7 +1,7 @@
-from genesis2.core.core import Plugin, implements
-from genesis2.utils import *
+from genesis2.core.core import Plugin
+from genesis2.utils.interlocked import ClassProxy
 from genesis2.interfaces.resources import IComponent
-
+from parallels import BackgroundWorker
 
 
 class Component (Plugin, BackgroundWorker):
@@ -11,7 +11,6 @@ class Component (Plugin, BackgroundWorker):
 
     - ``name`` - `str`, unique component ID
     """
-    implements(IComponent)
 
     name = 'unknown'
     proxy = None

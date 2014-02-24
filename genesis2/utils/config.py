@@ -2,8 +2,6 @@
 Tools for manipulating Genesis configuration files
 """
 
-__all__ = ['Config', 'ConfigProxy']
-
 import os
 from ConfigParser import ConfigParser
 
